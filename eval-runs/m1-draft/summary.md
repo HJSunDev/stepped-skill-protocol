@@ -8,6 +8,7 @@ Run package: `eval-runs/m1-draft`
 
 - rows: 40
 - complete rows: 0
+- rows with output and trace evidence: 0
 - incomplete rows: 40
 - validation issues: 0
 

@@ -18,6 +18,7 @@ This package does not contain results. It contains prompts, run order, scorecard
 - `scorecard.csv`: one row per run, ready for manual scoring.
 - `blind-review-map.csv`: maps blind output ids to run ids and variants.
 - `reviewer-guide.md`: blind scoring and process-scoring guide.
+- `operator-guide.md`: execution discipline, required evidence, and trace template.
 - `prompts/`: one prompt per run.
 - `outputs/`: save final outputs here using blind ids.
 - `traces/`: save execution notes here using run ids.
@@ -30,11 +31,13 @@ This package does not contain results. It contains prompts, run order, scorecard
 - Score final outputs before looking at `blind-review-map.csv`.
 - Use `reviewer-guide.md` when filling `scorecard.csv`.
 - Record failures as data.
+- Every completed scorecard row must have a non-empty output file and trace file.
 
 ## Preflight
 
 ```bash
 node tools/run-conformance.mjs
+node tools/check-m1-readiness.mjs
 ```
 
 ## Summarize

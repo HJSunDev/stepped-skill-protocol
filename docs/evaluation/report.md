@@ -42,23 +42,28 @@ Task set and runbook:
 Eval harness:
 
 - `tools/prepare-m1-eval.mjs`
+- `tools/check-m1-readiness.mjs`
 - `tools/summarize-m1-eval.mjs`
 - generated run package: `eval-runs/m1-draft/`
 - generated summary: `eval-runs/m1-draft/summary.md`
+- generated operator guide: `eval-runs/m1-draft/operator-guide.md`
 
 Preflight command:
 
 ```bash
 node tools/run-conformance.mjs
+node tools/check-m1-readiness.mjs
 ```
 
 Expected preflight result:
 
 ```text
-PASS research-brief
-PASS multi-phase-review
-13 invalid fixtures fail with expected stable error codes
+source validation passes for both valid fixtures
+publication validation passes for both valid fixtures
+CRLF frontmatter validation passes
+28 invalid publication fixtures fail with expected stable error codes
 PASS SSP v0 conformance suite draft
+PASS SSP M1 readiness check
 ```
 
 Prepare run package:
@@ -77,6 +82,7 @@ Runs: 40
 Summarize current run package:
 
 ```bash
+node tools/check-m1-readiness.mjs
 node tools/summarize-m1-eval.mjs
 ```
 
@@ -253,11 +259,13 @@ Current evidence completed:
 - two M0 sample packages exist;
 - ordinary baselines exist;
 - validation rules draft exists;
-- conformance suite draft exists with thirteen executable invalid fixtures;
+- conformance suite draft exists with twenty-eight executable invalid publication fixtures;
 - M1 task set and runbook exist;
 - M1 eval harness exists;
+- M1 readiness checker exists and validates run package consistency before execution;
 - M1 eval summarizer exists;
 - generated M1 run package exists with 40 prompts, run order, reviewer guide, scorecard, blind-review map, and incomplete summary;
+- M1 summarizer rejects completed rows without non-empty output and trace evidence;
 - validator prototype passes valid samples and rejects `broken-next`.
 
 Missing evidence:

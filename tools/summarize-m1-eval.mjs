@@ -133,6 +133,17 @@ function rowComplete(row) {
   return true;
 }
 
+function evidencePaths(row) {
+  return {
+    outputPath: path.join(runDir, "outputs", `${row.blind_id}.md`),
+    tracePath: path.join(runDir, "traces", `${row.run_id}.md`),
+  };
+}
+
+function fileHasContent(filePath) {
+  return fs.existsSync(filePath) && fs.statSync(filePath).isFile() && fs.statSync(filePath).size > 0;
+}
+
 function variantStats(rows) {
   return {
     count: rows.length,
@@ -224,6 +235,15 @@ function validateRows(rows) {
     if (!VALID_FAILURE_CATEGORIES.has(row.failure_category ?? "")) {
       pushValidation(issues, row, "failure_category", "Unknown failure category.");
     }
+    if (rowComplete(row)) {
+      const evidence = evidencePaths(row);
+      if (!fileHasContent(evidence.outputPath)) {
+        pushValidation(issues, row, "output", `Missing non-empty output file: ${toPosix(path.relative(runDir, evidence.outputPath))}.`);
+      }
+      if (!fileHasContent(evidence.tracePath)) {
+        pushValidation(issues, row, "trace", `Missing non-empty trace file: ${toPosix(path.relative(runDir, evidence.tracePath))}.`);
+      }
+    }
   }
   return issues;
 }
@@ -235,6 +255,10 @@ if (!fs.existsSync(scorecardPath)) {
 
 const rows = parseCsv(fs.readFileSync(scorecardPath, "utf8"));
 const validationIssues = validateRows(rows);
+const evidenceRows = rows.filter((row) => {
+  const evidence = evidencePaths(row);
+  return fileHasContent(evidence.outputPath) && fileHasContent(evidence.tracePath);
+});
 const ordinaryRows = rows.filter((row) => row.variant === "ordinary");
 const sspRows = rows.filter((row) => row.variant === "SSP");
 const incompleteRows = rows.filter((row) => !rowComplete(row));
@@ -289,6 +313,7 @@ const summary = {
   runDir: toPosix(path.relative(repoRoot, runDir)),
   rows: rows.length,
   completeRows: rows.length - incompleteRows.length,
+  evidenceRows: evidenceRows.length,
   validationIssues,
   incompleteRows: incompleteRows.map((row) => row.run_id),
   ordinary,
@@ -313,6 +338,7 @@ Run package: \`${toPosix(path.relative(repoRoot, runDir))}\`
 
 - rows: ${rows.length}
 - complete rows: ${rows.length - incompleteRows.length}
+- rows with output and trace evidence: ${evidenceRows.length}
 - incomplete rows: ${incompleteRows.length}
 - validation issues: ${validationIssues.length}
 

@@ -289,7 +289,7 @@ function promptFor(task, variant, runId, blindId) {
       : [
           `Use Stepped Skill package root: \`${fixture.skillRoot}\`.`,
           "Read `SKILL.md` first, then follow the declared SSP entry and each `Next` target exactly.",
-          "Do not list package directories or inspect future steps unless the current step's `Next` points there.",
+          "Use exact paths from the entry, current step `Resources`, and current step `Next`; a valid SSP package gives the current step enough information to proceed without directory discovery.",
           "Record handoff state as execution state. Do not expose private reasoning in the final answer.",
         ];
 
@@ -402,6 +402,81 @@ Leave blank when no notable failure occurred.
 `;
 }
 
+function operatorGuide() {
+  return `# SSP M1 Operator Guide
+
+Use this guide while executing prompts from \`run-order.csv\`.
+
+## Run Discipline
+
+1. Run prompts in \`run-order.csv\` order.
+2. Use the same model, tools, repository state, and time budget for every paired task.
+3. Do not repair weak model behavior during a run.
+4. Save only the final user-facing deliverable to \`outputs/<blind_id>.md\`.
+5. Save execution evidence to \`traces/<run_id>.md\`.
+6. Fill \`scorecard.csv\` after the run, using blind review for final output quality.
+
+## Required Evidence
+
+Every completed scorecard row must have:
+
+- a non-empty final output file at \`outputs/<blind_id>.md\`;
+- a non-empty trace file at \`traces/<run_id>.md\`;
+- scorecard fields filled according to \`reviewer-guide.md\`.
+
+\`tools/summarize-m1-eval.mjs\` treats a completed row without output or trace evidence as invalid.
+
+## Trace Template
+
+Use this shape for \`traces/<run_id>.md\`:
+
+\`\`\`markdown
+# Trace: <run_id>
+
+## Environment
+
+- model:
+- date:
+- operator:
+- time budget:
+
+## Prompt
+
+- prompt path:
+- output path:
+
+## Observed Reads
+
+- <path read or n/a>
+
+## SSP Process
+
+- chain complete: yes/no/n/a
+- step order correct: yes/no/n/a
+- steps observed:
+- handoff quality notes:
+
+## Failures Or Deviations
+
+- skipped step:
+- premature future work:
+- user correction:
+- infrastructure issue:
+
+## Notes
+
+- ...
+\`\`\`
+
+## After Running
+
+1. Blind-score final outputs before opening \`blind-review-map.csv\`.
+2. Fill process fields from traces.
+3. Run \`node tools/summarize-m1-eval.mjs\`.
+4. Treat \`invalid\` as a data-integrity failure, not an SSP result.
+`;
+}
+
 const runs = [];
 for (const task of tasks) {
   for (const variant of variants) {
@@ -445,6 +520,7 @@ This package does not contain results. It contains prompts, run order, scorecard
 - \`scorecard.csv\`: one row per run, ready for manual scoring.
 - \`blind-review-map.csv\`: maps blind output ids to run ids and variants.
 - \`reviewer-guide.md\`: blind scoring and process-scoring guide.
+- \`operator-guide.md\`: execution discipline, required evidence, and trace template.
 - \`prompts/\`: one prompt per run.
 - \`outputs/\`: save final outputs here using blind ids.
 - \`traces/\`: save execution notes here using run ids.
@@ -457,11 +533,13 @@ This package does not contain results. It contains prompts, run order, scorecard
 - Score final outputs before looking at \`blind-review-map.csv\`.
 - Use \`reviewer-guide.md\` when filling \`scorecard.csv\`.
 - Record failures as data.
+- Every completed scorecard row must have a non-empty output file and trace file.
 
 ## Preflight
 
 \`\`\`bash
 node tools/run-conformance.mjs
+node tools/check-m1-readiness.mjs
 \`\`\`
 
 ## Summarize
@@ -494,6 +572,7 @@ writeFile(
 );
 
 writeFile("reviewer-guide.md", reviewerGuide());
+writeFile("operator-guide.md", operatorGuide());
 
 writeFile(
   "scorecard.csv",

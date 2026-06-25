@@ -14,15 +14,16 @@ It keeps a Skill usable as an ordinary Skill, while allowing high-fidelity task 
 
 ## Current Status
 
-SSP is a pre-M1 architecture draft. It has examples, validation rules, conformance fixtures, authoring guidance, security notes, and an M1 evaluation harness.
+SSP is a pre-M1 architecture draft. It has examples, validation rules, conformance fixtures, authoring guidance, security notes, a source/publication validator prototype, and an M1 evaluation harness.
 
 It is not yet a proven public protocol. Public value claims require real M1 evaluation results.
 
 ## Quick Checks
 
 ```bash
+node tools/validate-ssp.mjs --mode source examples/research-brief
 node tools/run-conformance.mjs
 node tools/prepare-m1-eval.mjs
+node tools/check-m1-readiness.mjs
 node tools/summarize-m1-eval.mjs
 ```
-

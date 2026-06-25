@@ -47,15 +47,18 @@ Preflight command:
 
 ```bash
 node tools/run-conformance.mjs
+node tools/check-m1-readiness.mjs
 ```
 
 Expected preflight result:
 
 ```text
-PASS research-brief
-PASS multi-phase-review
-13 invalid fixtures fail with expected stable error codes
+source validation passes for both valid fixtures
+publication validation passes for both valid fixtures
+CRLF frontmatter validation passes
+28 invalid publication fixtures fail with expected stable error codes
 PASS SSP v0 conformance suite draft
+PASS SSP M1 readiness check
 ```
 
 Eval harness command:
@@ -76,6 +79,7 @@ Generated package contents:
 - `scorecard.csv`: one row per run;
 - `blind-review-map.csv`: blind id to run id / variant mapping;
 - `reviewer-guide.md`: blind quality scoring, process scoring, and win/tie/loss rules;
+- `operator-guide.md`: execution discipline, required evidence, and trace template;
 - `prompts/`: 40 prompts, one for each task/variant pair;
 - `outputs/`: save blind final outputs here;
 - `traces/`: save execution notes and observed reads here;
@@ -84,8 +88,11 @@ Generated package contents:
 Summary command:
 
 ```bash
+node tools/check-m1-readiness.mjs
 node tools/summarize-m1-eval.mjs
 ```
+
+`check-m1-readiness.mjs` must pass before executing M1. It checks run package files, run/scorecard/blind-map consistency, prompt paths, input artifact paths, task pairing, and SSP prompt bias guards.
 
 ## 3. Runbook
 
@@ -115,11 +122,14 @@ Recording requirements:
 - save the full prompt used for each variant;
 - save final output;
 - save observed file-read sequence if available;
+- save a non-empty trace file for each completed run;
 - record whether the SSP run read each step in expected order;
 - record whether it skipped, duplicated, or prematurely executed a later phase;
 - record any user correction or manual intervention.
 
 Do not repair a run during evaluation. If the model ignores `Next`, skips a phase, or produces a weak handoff, record the failure instead of guiding it back.
+
+Completed scorecard rows without a matching non-empty `outputs/<blind_id>.md` and `traces/<run_id>.md` are invalid. The summary tool treats missing evidence as a data-integrity failure, not as an SSP win/loss.
 
 ## 4. Research Brief Tasks
 

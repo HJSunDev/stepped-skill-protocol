@@ -3,6 +3,7 @@
   "runDir": "eval-runs/m1-draft",
   "rows": 40,
   "completeRows": 0,
+  "evidenceRows": 0,
   "validationIssues": [],
   "incompleteRows": [
     "RB-01-O",

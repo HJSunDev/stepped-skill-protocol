@@ -44,7 +44,7 @@ SSP should pass only if these are true in current artifacts, not merely intended
 
 | Requirement | Current Evidence | Verdict | Notes |
 | --- | --- | --- | --- |
-| Product essence is clear | `stepped-skill-protocol.md` defines SSP as turning manual staged prompting into reusable Skill packages. | Pass | The center is strong: productizing work users already hand-feed across turns. |
+| Product essence is clear | `docs/architecture.md` defines SSP as turning manual staged prompting into reusable Skill packages. | Pass | The center is strong: productizing work users already hand-feed across turns. |
 | Skill compatibility is preserved | `SKILL.md` remains the entry point; samples include ordinary fallbacks and ordinary baselines. | Pass | The protocol stays close enough to Agent Skills to avoid looking like an unrelated format. |
 | v0 scope is disciplined | v0 is single-entry, finite, linear, local-file based; branching and runtime orchestration are out of scope. | Pass | This is the right scope cut. Branching in v0 would create architecture debt. |
 | Core mechanism is physical distribution | Main draft and security notes distinguish distributed files from prompt-only instruction. | Pass | The design does move future step detail out of initial context. |
@@ -54,11 +54,11 @@ SSP should pass only if these are true in current artifacts, not merely intended
 | L0 fallback is not an empty shell | Sample packages include ordinary fallback and ordinary baseline files. | Pass for M0 | More sample diversity is needed before public release. |
 | L1 execution is portable | L1 uses local file reads and explicit `Next`; samples and validator support the chain. | Conditional pass | Needs real L1 execution traces from M1. |
 | L2 has a clean growth path | Security notes define scoped access, structured handoff, traces, and policy checks. | Pass | L2 enhances the same protocol instead of replacing it. |
-| Validation is deterministic | Validation rules, validator prototype, and conformance runner exist. | Pass for M0 | The suite now covers thirteen invalid-package classes across entry, fallback, manifest, resource, handoff, chain, version, and extension failures. |
-| Failure is honest | Invalid fixtures reject broken `Next`, missing entry, missing fallback, invalid manifest JSON, manifest mismatch, unsafe resources, missing handoff, unreachable step, unsupported version, unsupported extension, and cycle. | Pass for M0 | More edge-case fixtures are still useful before public release, but the core failure model is now materially exercised. |
+| Validation is deterministic | Validation rules, validator prototype, source/publication modes, and conformance runner exist. | Pass for M0 | The suite now covers source-only validation plus twenty-eight invalid publication classes across entry, fallback, manifest, resource, handoff, chain, version, extension, generated frontmatter, and path-shape failures. |
+| Failure is honest | Invalid fixtures reject broken `Next`, missing entry, missing fallback, invalid manifest JSON, manifest mismatch, unsafe resources, missing handoff, unreachable step, unsupported version, unsupported extension, cycle, generated frontmatter mismatch, duplicate manifest paths, invalid extension field types, entry traversal, and directory-like `Next`. | Pass for M0 | More edge-case fixtures are still useful before public release, but the core failure model is now materially exercised. |
 | Trust boundary is named | Security notes distinguish trusted package content from untrusted task/external data. | Pass | Public wording is appropriately conservative. |
 | Public release is gated | Main draft lists spec, authoring guide, examples, validator, conformance suite, eval report, security notes, changelog. | Conditional pass | Some artifacts exist only as drafts; formal spec and changelog are intentionally not created before M1. |
-| Value is testable | Evaluation report, 20-task eval task set, eval harness, blind reviewer guide, scorecard validator/summarizer, and generated 40-run package exist. | Conditional pass | Value is executable, scoreable, and aggregatable, but not yet tested. |
+| Value is testable | Evaluation report, 20-task eval task set, eval harness, readiness checker, blind reviewer guide, scorecard validator/summarizer, and generated 40-run package exist. | Conditional pass | Value is executable, scoreable, readiness-checkable, and aggregatable, but not yet tested. |
 | Public value is proven | No real M1 run data yet. | Fail / missing | This is the main remaining blocker. |
 
 ## 4. Architecture Debt Risks
@@ -167,11 +167,11 @@ Allowed current claim:
 | Security notes | Exists | Draft-ready |
 | Validation rules | Exists | Draft-ready |
 | Validator prototype | Exists | M0 prototype |
-| Conformance suite | Exists with thirteen executable invalid fixtures | M0/M1 draft |
+| Conformance suite | Exists with source-only validation plus twenty-eight executable invalid publication fixtures | M0/M1 draft |
 | Sample packages | Two exist | M0 sample quality |
 | Evaluation task set | Exists | Ready to run |
-| Evaluation harness | Exists with generated 40-run package | Ready to execute |
-| Evaluation summarizer | Exists with incomplete current summary and scorecard validation | Ready to validate and aggregate real scores |
+| Evaluation harness | Exists with generated 40-run package and readiness checker | Ready to execute after readiness check |
+| Evaluation summarizer | Exists with incomplete current summary, scorecard validation, and output/trace evidence checks | Ready to validate evidence and aggregate real scores |
 | Evaluation report | Planned, not executed | Not release-ready |
 | Formal specification | Not written by design | Blocked until M1 |
 | Changelog | Not written | Future release artifact |
@@ -190,7 +190,7 @@ Priority 1:
 
 Priority 2:
 
-- add remaining edge-case conformance fixtures for generated frontmatter mismatch, malformed paths, `.ssp/` resource access, duplicate manifest paths, invalid extension field types, and source-validation mode;
+- add future conformance fixtures only when real authoring or implementation failures reveal new edge cases;
 - add sample execution transcripts after M1;
 - record authoring time for at least one new Stepped Skill.
 
