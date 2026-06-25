@@ -1,0 +1,14 @@
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.log
+
+# Dependency folders
+node_modules/
+
+# Evaluation outputs are intentionally filled during real runs.
+eval-runs/**/outputs/*.md
+eval-runs/**/traces/*.md
+!eval-runs/**/outputs/.gitkeep
+!eval-runs/**/traces/.gitkeep
+
