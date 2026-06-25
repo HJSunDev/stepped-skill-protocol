@@ -1,0 +1,173 @@
+# Stepped Skill Protocol Conformance Suite Draft
+
+This draft defines the initial M0/M1 conformance suite for SSP v0.
+
+The suite is partially executable through the current reference validator prototype:
+
+```text
+tools/validate-ssp.mjs
+```
+
+Run the current suite:
+
+```bash
+node tools/run-conformance.mjs
+```
+
+Expected result:
+
+```text
+PASS research-brief
+PASS multi-phase-review
+FAIL broken-next -> SSP_NEXT_INVALID
+FAIL missing-entry-metadata -> SSP_ENTRY_MISSING
+FAIL missing-fallback -> SSP_PACKAGE_INVALID
+FAIL invalid-manifest-json -> SSP_PACKAGE_INVALID
+FAIL manifest-entry-mismatch -> SSP_MANIFEST_MISMATCH
+FAIL required-extension-mismatch -> SSP_MANIFEST_MISMATCH
+FAIL resource-path-escape -> SSP_RESOURCE_UNREADABLE
+FAIL resource-directory -> SSP_RESOURCE_UNREADABLE
+FAIL missing-handoff -> SSP_HANDOFF_MISSING
+FAIL unreachable-step -> SSP_CHAIN_UNREACHABLE_STEP
+FAIL unsupported-major-version -> SSP_VERSION_UNSUPPORTED
+FAIL unsupported-required-extension -> SSP_EXTENSION_UNSUPPORTED
+FAIL cyclic-chain -> SSP_CHAIN_CYCLE
+PASS SSP v0 conformance suite draft
+```
+
+## 1. Fixture Roots
+
+Current fixture root:
+
+```text
+examples/
+```
+
+Valid fixtures:
+
+- `research-brief/`
+- `multi-phase-review/`
+
+Executable invalid fixtures:
+
+- `conformance/fixtures/broken-next/`
+- `conformance/fixtures/missing-entry-metadata/`
+- `conformance/fixtures/missing-fallback/`
+- `conformance/fixtures/invalid-manifest-json/`
+- `conformance/fixtures/manifest-entry-mismatch/`
+- `conformance/fixtures/required-extension-mismatch/`
+- `conformance/fixtures/resource-path-escape/`
+- `conformance/fixtures/resource-directory/`
+- `conformance/fixtures/missing-handoff/`
+- `conformance/fixtures/unreachable-step/`
+- `conformance/fixtures/unsupported-major-version/`
+- `conformance/fixtures/unsupported-required-extension/`
+- `conformance/fixtures/cyclic-chain/`
+
+Invalid fixture description:
+
+- `examples/multi-phase-review/invalid-fixtures/broken-next/`
+
+## 2. Valid Fixture Matrix
+
+| Fixture | Expected Package Level | Expected Entry | Expected Terminal | Expected Result |
+| --- | --- | --- | --- | --- |
+| `research-brief` | L2-ready with manifest | `steps/collect.md` | `steps/finalize.md` | pass |
+| `multi-phase-review` | L2-ready with manifest | `steps/intake.md` | `steps/final-report.md` | pass |
+
+Required checks:
+
+- ordinary Agent Skill compatibility;
+- L0 fallback exists;
+- SSP metadata exists;
+- all reachable steps have required sections;
+- resources exist;
+- chain is linear;
+- manifest order matches projected chain;
+- expected handoff sequence exists.
+
+## 3. Invalid Fixture Matrix
+
+| Fixture | Mutation | Expected Code | Expected Result |
+| --- | --- | --- | --- |
+| `conformance/fixtures/broken-next` | Change `steps/evaluate.md` body `Next` to `steps/missing.md` | `SSP_NEXT_INVALID` | fail |
+| `conformance/fixtures/missing-entry-metadata` | Remove `metadata.stepped-skill.entry` from `SKILL.md` | `SSP_ENTRY_MISSING` | fail |
+| `conformance/fixtures/missing-fallback` | Remove `## Fallback Workflow` from `SKILL.md` | `SSP_PACKAGE_INVALID` | fail |
+| `conformance/fixtures/invalid-manifest-json` | Make `.ssp/manifest.json` malformed JSON | `SSP_PACKAGE_INVALID` | fail |
+| `conformance/fixtures/manifest-entry-mismatch` | Make manifest `entry` disagree with `SKILL.md` | `SSP_MANIFEST_MISMATCH` | fail |
+| `conformance/fixtures/required-extension-mismatch` | Make manifest `requiredExtensions` disagree with `SKILL.md` | `SSP_MANIFEST_MISMATCH` | fail |
+| `conformance/fixtures/resource-path-escape` | Declare `../outside.md` as a step resource | `SSP_RESOURCE_UNREADABLE` | fail |
+| `conformance/fixtures/resource-directory` | Declare a directory as a step resource | `SSP_RESOURCE_UNREADABLE` | fail |
+| `conformance/fixtures/missing-handoff` | Set non-terminal `Handoff` to `None.` | `SSP_HANDOFF_MISSING` | fail |
+| `conformance/fixtures/unreachable-step` | Include `steps/orphan.md` outside the entry chain | `SSP_CHAIN_UNREACHABLE_STEP` | fail |
+| `conformance/fixtures/unsupported-major-version` | Declare SSP version `1.0` | `SSP_VERSION_UNSUPPORTED` | fail |
+| `conformance/fixtures/unsupported-required-extension` | Declare unknown `example.branching` required extension | `SSP_EXTENSION_UNSUPPORTED` | fail |
+| `conformance/fixtures/cyclic-chain` | Create `start -> loop -> start` | `SSP_CHAIN_CYCLE` | fail |
+
+Expected validator detail for `broken-next`:
+
+```json
+{
+  "code": "SSP_NEXT_INVALID",
+  "severity": "error",
+  "path": "steps/evaluate.md",
+  "section": "Next",
+  "expected": "steps/recommendations.md",
+  "actual": "steps/missing.md"
+}
+```
+
+## 4. Required Suite Outputs
+
+Each fixture should define:
+
+- validator result;
+- stable error code when invalid;
+- expected manifest when valid;
+- expected chain diagram;
+- expected handoff sequence when valid;
+- short rationale explaining what the fixture proves.
+
+## 5. Minimum Passing Validator
+
+A minimum SSP v0 validator passes this suite when it can:
+
+- accept both valid fixtures;
+- reject `broken-next` with `SSP_NEXT_INVALID`;
+- reject `missing-entry-metadata` with `SSP_ENTRY_MISSING`;
+- reject `missing-fallback` with `SSP_PACKAGE_INVALID`;
+- reject `invalid-manifest-json` with `SSP_PACKAGE_INVALID`;
+- reject `manifest-entry-mismatch` with `SSP_MANIFEST_MISMATCH`;
+- reject `required-extension-mismatch` with `SSP_MANIFEST_MISMATCH`;
+- reject `resource-path-escape` with `SSP_RESOURCE_UNREADABLE`;
+- reject `resource-directory` with `SSP_RESOURCE_UNREADABLE`;
+- reject `missing-handoff` with `SSP_HANDOFF_MISSING`;
+- reject `unreachable-step` with `SSP_CHAIN_UNREACHABLE_STEP`;
+- reject `unsupported-major-version` with `SSP_VERSION_UNSUPPORTED`;
+- reject `unsupported-required-extension` with `SSP_EXTENSION_UNSUPPORTED`;
+- reject `cyclic-chain` with `SSP_CHAIN_CYCLE`;
+- project the same chains as `expected-chain.md`;
+- produce stable issue output for invalid fixtures;
+- distinguish source validation from publication validation.
+
+Current prototype status:
+
+- accepts `research-brief`;
+- accepts `multi-phase-review`;
+- rejects executable invalid fixtures for missing entry, missing fallback, invalid manifest JSON, manifest mismatch, unsafe resources, missing handoff, unreachable step, unsupported version, unsupported extension, and cyclic chain.
+- `run-conformance.mjs` verifies those expectations in one command.
+
+## 6. Expansion Plan
+
+Add future invalid fixtures for:
+
+- generated step frontmatter mismatch;
+- malformed `Next` containing URL, query, hash, or absolute path;
+- `.ssp/` resource access;
+- duplicate manifest step paths;
+- invalid `requiredExtensions` type;
+- source validation mode without manifest.
+
+Product judgment:
+
+> The suite should grow from the mistakes authors actually make. The first version should prove the core chain, resource, handoff, and manifest invariants without becoming a full testing framework.
