@@ -77,6 +77,8 @@ Do not make authors hand-maintain control-plane files.
 
 `SKILL.md` is the only public entry point. It must work for both ordinary agents and SSP-aware agents.
 
+The `name` field must follow Agent Skills naming rules and match the package directory. The `description` should describe what the Skill does and when to use it; do not spend the primary description budget on SSP mechanics.
+
 Minimum shape:
 
 ```markdown
@@ -156,7 +158,7 @@ Recommended template:
 ```markdown
 # collect
 
-## Purpose
+## Objective
 
 State what this step is responsible for.
 
@@ -287,7 +289,7 @@ Before running the validator, check:
 - `SKILL.md` is a valid ordinary Skill.
 - `SKILL.md` has a useful ordinary fallback.
 - `SKILL.md` names one entry step.
-- each step has `Purpose`, `Instructions`, `Output`, `Handoff` when non-terminal, and `Next`;
+- each step has `Objective`, `Resources`, `Instructions`, `Output`, `Completion Criteria`, `Handoff`, and `Next`;
 - each `Next` target exists or is `END`;
 - the chain is finite and linear;
 - no step requires reading future steps;

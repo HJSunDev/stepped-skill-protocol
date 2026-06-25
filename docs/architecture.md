@@ -395,9 +395,14 @@ Compatibility contract:
 
 - `SKILL.md` MUST use YAML frontmatter followed by Markdown body.
 - `name` and `description` MUST remain ordinary Agent Skills fields.
-- `name` SHOULD follow Agent Skills naming rules and match the package directory.
+- `name` MUST follow Agent Skills naming rules: 1-64 characters, lowercase letters, numbers, single hyphens, no leading/trailing hyphen, no consecutive hyphens, and it MUST match the package directory.
 - `description` MUST describe what the skill does and when to use it; it SHOULD NOT describe SSP mechanics as the primary value.
+- `description` MUST stay within the Agent Skills length limit.
+- `compatibility`, when present, MUST stay within the Agent Skills length limit.
+- `name`, `description`, and `compatibility` values MUST be scalar strings, not arrays, nested objects, or unquoted YAML non-string scalars.
 - `metadata` MUST remain a string-to-string map.
+- `metadata` values MUST be scalar strings, not arrays, nested objects, or inline collections.
+- `metadata` values that YAML would parse as numbers, booleans, or null MUST be quoted.
 - SSP metadata keys MUST be namespaced with `stepped-skill.`.
 - `compatibility` MAY mention SSP support, but ordinary agents must not need it to understand the skill.
 - The full `SKILL.md` body is loaded when the skill activates, so SSP-specific content in `SKILL.md` must stay short.
@@ -494,6 +499,7 @@ Fallback 是 L0 体验的生命线。它必须包含：
 Fallback 的尺度规则：
 
 - **必须足够完整**：不了解 SSP 的 agent 只读 fallback，也能产出一个可接受结果。
+- **必须非空**：fallback MUST contain real ordinary Skill instructions, not only a heading.
 - **必须保持低保真**：fallback 只写阶段、成功标准、关键注意事项，不写每一步的详细操作细节。
 - **不得重复 steps**：高保真方法、复杂检查清单、长参考说明必须留在 step 中。
 - **应控制长度**：fallback SHOULD 控制在 3-7 个动作或短段落内。
@@ -682,6 +688,8 @@ A published SSP step MUST include:
 - `Handoff`
 - `Next`
 
+`Objective`, `Instructions`, `Output`, and `Completion Criteria` MUST be non-empty.
+
 ### 9.1 Resources
 
 Resources define what the current step needs.
@@ -690,6 +698,7 @@ Rules:
 
 - Every step MUST have a `Resources` section.
 - If no resource is needed, write `None`.
+- Otherwise `Resources` MUST be a Markdown bullet list of exact skill-root relative file paths.
 - Step frontmatter MAY list the same resources for validators.
 - Resources SHOULD be exact paths, not directory names.
 - Resources are current-step inputs, not future-step hints.
@@ -765,6 +774,7 @@ Handoff is the bridge between “a sequence of files” and “a continuous exec
 Rules:
 
 - `Next` MUST be a relative step file path or `END`.
+- `Next` MUST be written as exactly one bare value or exactly one Markdown code span; explanatory prose belongs in `Instructions`, not `Next`.
 - SSP v0 allows exactly one `Next` per step.
 - SSP v0 does not allow conditional, multiple, or computed next steps.
 - `## Next` in the body is the source authority for authors and the model-readable transition.
@@ -873,6 +883,7 @@ Error classes:
 | Code | Class | Meaning | Recovery |
 | --- | --- | --- | --- |
 | `SSP_PACKAGE_INVALID` | package | Package fails required validation | Fix package before publication |
+| `SSP_AGENT_SKILL_INVALID` | compatibility | Base Agent Skills frontmatter is invalid | Fix `SKILL.md` before claiming SSP compatibility |
 | `SSP_ENTRY_MISSING` | package | `stepped-skill.entry` is missing or invalid | Use L0 fallback or fail SSP path |
 | `SSP_VERSION_UNSUPPORTED` | compatibility | SSP major version is unknown or unsupported | Fail publication validation or upgrade validator/runtime |
 | `SSP_STEP_MISSING_SECTION` | package | Step is missing a required section | Fix step source before publication |
@@ -983,6 +994,7 @@ The suite should include:
 - valid L0-compatible package;
 - valid L1-ready package;
 - valid L2-ready package with manifest;
+- invalid package with invalid base Agent Skills frontmatter;
 - invalid package with missing fallback;
 - invalid package with broken `Next`;
 - invalid package with resource path escaping skill root;
@@ -1016,6 +1028,8 @@ Minimum public release package:
 - `conformance-suite/`：valid and invalid fixtures with expected outputs;
 - `evaluation-report.md`：M1 eval results, task set description, model/environment notes, failure analysis;
 - `security.md`：threat model, non-goals, and L2 enforcement guidance;
+- `CONTRIBUTING.md` or `governance.md`：how changes, extension proposals, conformance additions, and compatibility questions are reviewed;
+- `LICENSE`：clear licensing for code, docs, examples, and any generated protocol artifacts;
 - `CHANGELOG.md`：version history and compatibility notes.
 
 Current draft artifacts:
@@ -1141,7 +1155,7 @@ Review gate:
 | Validation is deterministic | Path, id, manifest, chain, and error output rules are specified |
 | Failure is honest | Error model forbids invented steps and silent fallback after a broken transition |
 | Trust boundary is named | Security notes distinguish static distribution from enforced isolation and package instructions from untrusted task data |
-| Public release is gated | Spec, authoring guide, examples, validator, conformance suite, eval report, security notes, changelog are required |
+| Public release is gated | Spec, authoring guide, examples, validator, conformance suite, eval report, security notes, governance/contribution rules, license, and changelog are required |
 | Value is testable | Eval gates compare SSP against ordinary Skill on suitable multi-phase tasks |
 
 Failure conditions:
@@ -1313,6 +1327,7 @@ Stop or redesign if:
 - At least two realistic example packages.
 - Evaluation report.
 - Security / threat model document.
+- Contribution / governance guide.
 - Changelog and version policy.
 - Public release checklist.
 
