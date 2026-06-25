@@ -12,9 +12,16 @@ const REQUIRED_STEP_SECTIONS = [
   "Handoff",
   "Next",
 ];
+const REQUIRED_NON_EMPTY_STEP_SECTIONS = [
+  "Objective",
+  "Instructions",
+  "Output",
+  "Completion Criteria",
+];
 
 const SUPPORTED_REQUIRED_EXTENSIONS = new Set();
 const SUPPORTED_MAJOR_VERSION = "0";
+const SKILL_NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 function issue(code, pathValue, section, expected, actual, message, hint) {
   return {
@@ -61,16 +68,18 @@ function isSafeProtocolPath(value) {
 
 function parseFrontmatter(text) {
   const start = /^---\r?\n/.exec(text);
-  if (!start) return { fields: {}, metadata: {}, body: text };
+  if (!start) return { frontmatterOk: false, fields: {}, metadata: {}, metadataIssues: [], body: text };
   const end = text.slice(start[0].length).search(/\r?\n---(?:\r?\n|$)/);
-  if (end === -1) return { fields: {}, metadata: {}, body: text };
+  if (end === -1) return { frontmatterOk: false, fields: {}, metadata: {}, metadataIssues: [], body: text };
   const yamlStart = start[0].length;
   const yamlEnd = yamlStart + end;
   const close = /\r?\n---(?:\r?\n|$)/.exec(text.slice(yamlEnd));
   const bodyStart = yamlEnd + (close?.[0].length ?? 0);
   const yaml = text.slice(yamlStart, yamlEnd).split(/\r?\n/);
   const fields = {};
+  const fieldIssues = [];
   const metadata = {};
+  const metadataIssues = [];
   let inMetadata = false;
 
   for (const line of yaml) {
@@ -78,14 +87,63 @@ function parseFrontmatter(text) {
     const top = /^([A-Za-z0-9_.-]+):\s*(.*)$/.exec(line);
     if (top && !line.startsWith(" ")) {
       inMetadata = top[1] === "metadata";
-      if (!inMetadata) fields[top[1]] = stripQuotes(top[2]);
+      if (inMetadata && top[2].trim()) {
+        metadataIssues.push({
+          section: "metadata",
+          actual: top[2].trim(),
+          message: "Metadata must be a YAML map, not an inline scalar or collection.",
+        });
+      }
+      if (!inMetadata) {
+        const rawValue = top[2].trim();
+        fields[top[1]] = stripQuotes(rawValue);
+        if (["name", "description", "compatibility"].includes(top[1])) {
+          if (rawValue.startsWith("[") || rawValue.startsWith("{")) {
+            fieldIssues.push({
+              section: top[1],
+              actual: rawValue,
+              message: `${top[1]} must be a scalar string.`,
+            });
+          } else if (rawValue && looksLikeNonStringYamlScalar(rawValue)) {
+            fieldIssues.push({
+              section: top[1],
+              actual: rawValue,
+              message: `${top[1]} must be a string; quote values that YAML would parse as numbers, booleans, or null.`,
+            });
+          }
+        }
+      }
       continue;
     }
     const nested = /^\s+([A-Za-z0-9_.-]+):\s*(.*)$/.exec(line);
-    if (inMetadata && nested) metadata[nested[1]] = stripQuotes(nested[2]);
+    if (inMetadata && nested) {
+      const rawValue = nested[2].trim();
+      if (!rawValue || rawValue.startsWith("[") || rawValue.startsWith("{")) {
+        metadataIssues.push({
+          section: `metadata.${nested[1]}`,
+          actual: rawValue || "empty or nested value",
+          message: "Metadata values must be scalar strings.",
+        });
+      } else if (looksLikeNonStringYamlScalar(rawValue)) {
+        metadataIssues.push({
+          section: `metadata.${nested[1]}`,
+          actual: rawValue,
+          message: "Metadata values must be strings; quote values that YAML would parse as numbers, booleans, or null.",
+        });
+      }
+      metadata[nested[1]] = stripQuotes(rawValue);
+      continue;
+    }
+    if (inMetadata && line.startsWith(" ")) {
+      metadataIssues.push({
+        section: "metadata",
+        actual: line.trim(),
+        message: "Metadata entries must be simple string key-value pairs.",
+      });
+    }
   }
 
-  return { fields, metadata, body: text.slice(bodyStart) };
+  return { frontmatterOk: true, fields, fieldIssues, metadata, metadataIssues, body: text.slice(bodyStart) };
 }
 
 function parseStepProjection(text) {
@@ -143,6 +201,15 @@ function stripQuotes(value) {
   return value.replace(/^["']|["']$/g, "");
 }
 
+function isQuoted(value) {
+  return /^["'].*["']$/.test(value);
+}
+
+function looksLikeNonStringYamlScalar(value) {
+  if (isQuoted(value)) return false;
+  return /^(?:true|false|null|~)$/i.test(value) || /^[-+]?(?:\d+|\d+\.\d+|\.\d+)(?:[eE][-+]?\d+)?$/.test(value);
+}
+
 function parseRequiredExtensionMetadata(value) {
   if (!value) return [];
   return value
@@ -158,6 +225,10 @@ function majorVersion(value) {
 
 function isSupportedVersion(value) {
   return majorVersion(value) === SUPPORTED_MAJOR_VERSION;
+}
+
+function isValidSkillName(value) {
+  return typeof value === "string" && value.length >= 1 && value.length <= 64 && SKILL_NAME_PATTERN.test(value);
 }
 
 function sectionBody(markdown, sectionName) {
@@ -177,21 +248,34 @@ function sectionBody(markdown, sectionName) {
 
 function parseNext(markdown) {
   const body = sectionBody(markdown, "Next");
-  if (!body) return null;
-  const code = /`([^`]+)`/.exec(body);
-  return code ? code[1].trim() : body.split(/\r?\n/)[0].trim();
+  if (!body) return { next: null, malformed: false, actual: body ?? "missing" };
+  const lines = body.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (lines.length !== 1) {
+    return { next: null, malformed: true, actual: lines.join(" / ") || "empty" };
+  }
+  const line = lines[0];
+  const code = /^`([^`]+)`$/.exec(line);
+  if (code) return { next: code[1].trim(), malformed: false, actual: line };
+  if (/^[^\s`]+$/.test(line)) return { next: line, malformed: false, actual: line };
+  return { next: null, malformed: true, actual: line };
 }
 
 function parseResources(markdown) {
   const body = sectionBody(markdown, "Resources");
   if (!body) return null;
-  if (/^None\.?$/i.test(body.trim())) return [];
+  if (/^None\.?$/i.test(body.trim())) return { resources: [], malformedLines: [] };
   const resources = [];
+  const malformedLines = [];
   for (const line of body.split(/\r?\n/)) {
+    if (!line.trim()) continue;
     const bullet = /^\s*-\s+`?([^`]+?)`?\s*$/.exec(line);
-    if (bullet) resources.push(bullet[1].trim());
+    if (bullet) {
+      resources.push(bullet[1].trim());
+    } else {
+      malformedLines.push(line.trim());
+    }
   }
-  return resources;
+  return { resources, malformedLines };
 }
 
 function generatedStepId(stepPath) {
@@ -228,11 +312,35 @@ function validatePackage(rootInput, options = {}) {
   }
 
   const skill = parseFrontmatter(readText(skillPath));
-  if (!skill.fields.name) {
-    issues.push(issue("SSP_PACKAGE_INVALID", "SKILL.md", "name", "present", "missing", "Skill name is missing.", "Add name frontmatter."));
+  if (!skill.frontmatterOk) {
+    issues.push(issue("SSP_AGENT_SKILL_INVALID", "SKILL.md", "frontmatter", "YAML frontmatter followed by Markdown body", "missing or malformed", "SKILL.md frontmatter is missing or malformed.", "Start SKILL.md with a valid YAML frontmatter block delimited by --- lines."));
+    return { root, ok: false, issues };
   }
-  if (!skill.fields.description) {
-    issues.push(issue("SSP_PACKAGE_INVALID", "SKILL.md", "description", "present", "missing", "Skill description is missing.", "Add description frontmatter."));
+  for (const fieldIssue of skill.fieldIssues) {
+    issues.push(issue("SSP_AGENT_SKILL_INVALID", "SKILL.md", fieldIssue.section, "scalar string", fieldIssue.actual, fieldIssue.message, "Keep Agent Skills frontmatter fields as strings."));
+  }
+  for (const metadataIssue of skill.metadataIssues) {
+    issues.push(issue("SSP_AGENT_SKILL_INVALID", "SKILL.md", metadataIssue.section, "string-to-string metadata map", metadataIssue.actual, metadataIssue.message, "Keep metadata as simple string key-value pairs."));
+  }
+  const skillName = skill.fields.name;
+  const packageName = path.basename(root);
+  if (!skillName) {
+    issues.push(issue("SSP_AGENT_SKILL_INVALID", "SKILL.md", "name", "present", "missing", "Skill name is missing.", "Add name frontmatter."));
+  } else if (!isValidSkillName(skillName)) {
+    issues.push(issue("SSP_AGENT_SKILL_INVALID", "SKILL.md", "name", "1-64 lowercase letters, numbers, and single hyphens", skillName, "Skill name does not satisfy Agent Skills naming rules.", "Use lowercase letters, numbers, and hyphens; avoid leading, trailing, or repeated hyphens."));
+  } else if (skillName !== packageName) {
+    issues.push(issue("SSP_AGENT_SKILL_INVALID", "SKILL.md", "name", packageName, skillName, "Skill name must match the package directory name.", "Rename the package directory or update SKILL.md name."));
+  }
+  const skillDescription = skill.fields.description;
+  if (!skillDescription) {
+    issues.push(issue("SSP_AGENT_SKILL_INVALID", "SKILL.md", "description", "present", "missing", "Skill description is missing.", "Add description frontmatter."));
+  } else if (skillDescription.length > 1024) {
+    issues.push(issue("SSP_AGENT_SKILL_INVALID", "SKILL.md", "description", "1-1024 characters", `${skillDescription.length} characters`, "Skill description exceeds the Agent Skills length limit.", "Shorten description while keeping what the skill does and when to use it."));
+  }
+  if (Object.hasOwn(skill.fields, "compatibility") && skill.fields.compatibility.length === 0) {
+    issues.push(issue("SSP_AGENT_SKILL_INVALID", "SKILL.md", "compatibility", "1-500 characters", "empty", "Skill compatibility is present but empty.", "Remove compatibility or provide a short compatibility statement."));
+  } else if (skill.fields.compatibility && skill.fields.compatibility.length > 500) {
+    issues.push(issue("SSP_AGENT_SKILL_INVALID", "SKILL.md", "compatibility", "1-500 characters", `${skill.fields.compatibility.length} characters`, "Skill compatibility exceeds the Agent Skills length limit.", "Shorten compatibility or move detail into the body."));
   }
   const skillVersion = skill.metadata["stepped-skill.version"];
   if (!skillVersion) {
@@ -244,8 +352,11 @@ function validatePackage(rootInput, options = {}) {
   if (!entry) {
     issues.push(issue("SSP_ENTRY_MISSING", "SKILL.md", "metadata.stepped-skill.entry", "present", "missing", "SSP entry metadata is missing.", "Add stepped-skill.entry."));
   }
-  if (!/## Fallback Workflow/.test(skill.body)) {
+  const fallbackWorkflow = sectionBody(skill.body, "Fallback Workflow");
+  if (fallbackWorkflow === null) {
     issues.push(issue("SSP_PACKAGE_INVALID", "SKILL.md", "Fallback Workflow", "present", "missing", "Fallback workflow is missing.", "Add an ordinary Skill fallback."));
+  } else if (!fallbackWorkflow.trim()) {
+    issues.push(issue("SSP_PACKAGE_INVALID", "SKILL.md", "Fallback Workflow", "non-empty ordinary Skill fallback", "empty", "Fallback workflow is empty.", "Add a complete ordinary Skill fallback."));
   }
 
   const metadataRequiredExtensions = parseRequiredExtensionMetadata(skill.metadata["stepped-skill.required-extensions"]);
@@ -336,12 +447,19 @@ function validatePackage(rootInput, options = {}) {
 
     const body = readText(currentPath);
     for (const section of REQUIRED_STEP_SECTIONS) {
-      if (sectionBody(body, section) === null) {
+      const content = sectionBody(body, section);
+      if (content === null) {
         issues.push(issue("SSP_STEP_MISSING_SECTION", current, section, "present", "missing", `Step is missing ${section}.`, `Add ## ${section}.`));
+      } else if (REQUIRED_NON_EMPTY_STEP_SECTIONS.includes(section) && !content.trim()) {
+        issues.push(issue("SSP_STEP_MISSING_SECTION", current, section, "non-empty section", "empty", `Step section ${section} is empty.`, `Fill ## ${section}.`));
       }
     }
 
-    const resources = parseResources(body) ?? [];
+    const parsedResources = parseResources(body);
+    const resources = parsedResources?.resources ?? [];
+    for (const malformedLine of parsedResources?.malformedLines ?? []) {
+      issues.push(issue("SSP_RESOURCE_UNREADABLE", current, "Resources", "`None` or bullet list of file paths", malformedLine, "Resources section contains a malformed line.", "Use `None` or `- path/to/file.md` entries only."));
+    }
     for (const resource of resources) {
       const validResource = isSafeProtocolPath(resource) && !resource.startsWith(".ssp/");
       if (!validResource || !exists(packagePath(root, resource)) || fs.statSync(packagePath(root, resource)).isDirectory()) {
@@ -349,10 +467,16 @@ function validatePackage(rootInput, options = {}) {
       }
     }
 
-    const next = parseNext(body);
+    const parsedNext = parseNext(body);
+    const next = parsedNext.next;
     const manifestStep = Array.isArray(manifest?.steps) ? manifest.steps.find((step) => step.path === current) : null;
     const expectedNext = manifestStep?.next;
     let invalidNext = false;
+    if (parsedNext.malformed) {
+      issues.push(issue("SSP_NEXT_INVALID", current, "Next", "single bare path, single code-spanned path, or END", parsedNext.actual, "Next section is malformed.", "Use exactly one target: `steps/name.md` or `END`."));
+      chainBroken = true;
+      break;
+    }
     if (!next) {
       issues.push(issue("SSP_NEXT_INVALID", current, "Next", "step path or END", "missing", "Next is missing.", "Add ## Next."));
       chainBroken = true;

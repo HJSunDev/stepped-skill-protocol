@@ -1,5 +1,5 @@
 ---
-name: multi-phase-review
+name: broken-next
 description: Reviews a design, plan, document, or implementation through intake, inspection, evaluation, recommendations, and final reporting.
 compatibility: Works as an ordinary Agent Skill. Supports SSP L1 when the agent can read exact skill-root relative files.
 metadata:

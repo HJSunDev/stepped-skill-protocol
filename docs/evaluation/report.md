@@ -61,7 +61,7 @@ Expected preflight result:
 source validation passes for both valid fixtures
 publication validation passes for both valid fixtures
 CRLF frontmatter validation passes
-28 invalid publication fixtures fail with expected stable error codes
+41 invalid publication fixtures fail with expected stable error codes
 PASS SSP v0 conformance suite draft
 PASS SSP M1 readiness check
 ```
@@ -259,7 +259,7 @@ Current evidence completed:
 - two M0 sample packages exist;
 - ordinary baselines exist;
 - validation rules draft exists;
-- conformance suite draft exists with twenty-eight executable invalid publication fixtures;
+- conformance suite draft exists with forty-one executable invalid publication fixtures;
 - M1 task set and runbook exist;
 - M1 eval harness exists;
 - M1 readiness checker exists and validates run package consistency before execution;

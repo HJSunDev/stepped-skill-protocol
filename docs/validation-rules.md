@@ -91,6 +91,7 @@ Fields:
 | Code | Severity | Applies To | Meaning |
 | --- | --- | --- | --- |
 | `SSP_PACKAGE_INVALID` | error | source/publication | Package fails a required invariant |
+| `SSP_AGENT_SKILL_INVALID` | error | source/publication | Base Agent Skills compatibility invariant fails |
 | `SSP_ENTRY_MISSING` | error | source/publication | `stepped-skill.entry` is missing or invalid |
 | `SSP_VERSION_UNSUPPORTED` | error | source/publication | SSP major version is unknown or unsupported |
 | `SSP_STEP_MISSING_SECTION` | error | source/publication | Step is missing a required section |
@@ -111,8 +112,15 @@ Fields:
 - `SKILL.md` MUST exist.
 - `SKILL.md` MUST contain YAML frontmatter followed by Markdown body.
 - `name` MUST exist.
+- `name` MUST satisfy Agent Skills naming rules: 1-64 characters, lowercase letters, numbers, single hyphens, no leading hyphen, no trailing hyphen, and no consecutive hyphens.
+- `name` MUST match the package directory name.
 - `description` MUST exist.
+- `description` MUST be 1-1024 characters.
+- `compatibility`, when present, MUST be 1-500 characters.
+- `name`, `description`, and `compatibility` values MUST be scalar strings, not arrays, nested objects, or unquoted YAML non-string scalars.
 - `metadata` MUST be a string-to-string map when present.
+- Metadata values MUST be scalar strings, not arrays, nested objects, or inline collections.
+- Metadata values that YAML would parse as numbers, booleans, or null MUST be quoted.
 - SSP metadata keys MUST use the `stepped-skill.` namespace.
 
 ### 4.2 SSP Entry
@@ -126,6 +134,7 @@ Fields:
 ### 4.3 L0 Fallback
 
 - `SKILL.md` MUST include a fallback workflow or equivalent ordinary Skill path.
+- Fallback MUST be non-empty.
 - Fallback MUST be complete enough to produce a lower-fidelity result without reading step files.
 - Fallback MUST NOT be empty protocol boilerplate.
 
@@ -143,9 +152,12 @@ Every reachable step MUST include:
 
 Terminal steps MAY define `Handoff` as `None`.
 
+`Objective`, `Instructions`, `Output`, and `Completion Criteria` MUST be non-empty.
+
 ### 4.5 Resources
 
 - `Resources` MUST be exact skill-root relative file paths or `None`.
+- `Resources` MUST be written as exactly `None` or as a Markdown bullet list of exact file paths.
 - Resource paths MUST NOT point to directories.
 - Resource paths MUST NOT escape the skill root.
 - Resource paths MUST use `/` separators and MUST NOT contain backslashes, query fragments, hash fragments, absolute paths, drive letters, or URLs.
@@ -155,6 +167,7 @@ Terminal steps MAY define `Handoff` as `None`.
 ### 4.6 Next
 
 - `Next` MUST be a single relative step path or `END`.
+- `Next` MUST be written as exactly one bare value or exactly one Markdown code span.
 - Non-terminal `Next` MUST point to an existing file under `steps/`.
 - Terminal `Next` MUST be exactly `END`.
 - `Next` MUST use `/` separators and MUST NOT contain backslashes, query fragments, hash fragments, absolute paths, drive letters, or URLs.

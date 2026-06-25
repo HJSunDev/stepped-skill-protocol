@@ -33,7 +33,47 @@ const invalidFixtures = [
     expectedCode: "SSP_ENTRY_MISSING",
   },
   {
+    path: "conformance/fixtures/missing-frontmatter",
+    expectedCode: "SSP_AGENT_SKILL_INVALID",
+  },
+  {
+    path: "conformance/fixtures/malformed-frontmatter",
+    expectedCode: "SSP_AGENT_SKILL_INVALID",
+  },
+  {
+    path: "conformance/fixtures/invalid-skill-name",
+    expectedCode: "SSP_AGENT_SKILL_INVALID",
+  },
+  {
+    path: "conformance/fixtures/skill-name-mismatch",
+    expectedCode: "SSP_AGENT_SKILL_INVALID",
+  },
+  {
+    path: "conformance/fixtures/invalid-description-shape",
+    expectedCode: "SSP_AGENT_SKILL_INVALID",
+  },
+  {
+    path: "conformance/fixtures/empty-compatibility",
+    expectedCode: "SSP_AGENT_SKILL_INVALID",
+  },
+  {
+    path: "conformance/fixtures/invalid-compatibility-scalar",
+    expectedCode: "SSP_AGENT_SKILL_INVALID",
+  },
+  {
+    path: "conformance/fixtures/invalid-metadata-shape",
+    expectedCode: "SSP_AGENT_SKILL_INVALID",
+  },
+  {
+    path: "conformance/fixtures/invalid-metadata-scalar",
+    expectedCode: "SSP_AGENT_SKILL_INVALID",
+  },
+  {
     path: "conformance/fixtures/missing-fallback",
+    expectedCode: "SSP_PACKAGE_INVALID",
+  },
+  {
+    path: "conformance/fixtures/empty-fallback",
     expectedCode: "SSP_PACKAGE_INVALID",
   },
   {
@@ -55,6 +95,14 @@ const invalidFixtures = [
   {
     path: "conformance/fixtures/resource-directory",
     expectedCode: "SSP_RESOURCE_UNREADABLE",
+  },
+  {
+    path: "conformance/fixtures/malformed-resources-section",
+    expectedCode: "SSP_RESOURCE_UNREADABLE",
+  },
+  {
+    path: "conformance/fixtures/empty-instructions",
+    expectedCode: "SSP_STEP_MISSING_SECTION",
   },
   {
     path: "conformance/fixtures/missing-handoff",
@@ -98,6 +146,10 @@ const invalidFixtures = [
   },
   {
     path: "conformance/fixtures/next-directory",
+    expectedCode: "SSP_NEXT_INVALID",
+  },
+  {
+    path: "conformance/fixtures/next-with-prose",
     expectedCode: "SSP_NEXT_INVALID",
   },
   {
@@ -153,9 +205,20 @@ function printOutput(result) {
   if (result.stderr) process.stderr.write(result.stderr);
 }
 
+function parseIssueCodes(stdout) {
+  const jsonStart = stdout.indexOf("[");
+  if (jsonStart === -1) return [];
+  try {
+    const issues = JSON.parse(stdout.slice(jsonStart));
+    return Array.isArray(issues) ? issues.map((item) => item?.code).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
 function runCrlfFrontmatterCheck() {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ssp-crlf-"));
-  const tempFixture = path.join(tempRoot, "research-brief-crlf");
+  const tempFixture = path.join(tempRoot, "research-brief");
   try {
     fs.cpSync(path.join(repoRoot, "examples/research-brief"), tempFixture, { recursive: true });
     for (const relativePath of ["SKILL.md", "steps/collect.md"]) {
@@ -211,10 +274,10 @@ for (const fixture of invalidFixtures) {
     continue;
   }
 
-  const combined = `${result.stdout}\n${result.stderr}`;
-  if (!combined.includes(fixture.expectedCode)) {
+  const issueCodes = parseIssueCodes(result.stdout);
+  if (!issueCodes.includes(fixture.expectedCode)) {
     failed = true;
-    console.error(`Conformance failure: ${fixture.path} did not report ${fixture.expectedCode}.`);
+    console.error(`Conformance failure: ${fixture.path} did not report ${fixture.expectedCode}. Actual codes: ${issueCodes.join(", ") || "none"}.`);
   }
 }
 

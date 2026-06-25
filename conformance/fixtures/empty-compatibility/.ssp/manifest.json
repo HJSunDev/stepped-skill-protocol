@@ -1,0 +1,15 @@
+{
+  "protocol": "stepped-skill",
+  "version": "0.1",
+  "entry": "steps/start.md",
+  "requiredExtensions": [],
+  "steps": [
+    {
+      "id": "start",
+      "path": "steps/start.md",
+      "next": "END",
+      "resources": []
+    }
+  ]
+}
+

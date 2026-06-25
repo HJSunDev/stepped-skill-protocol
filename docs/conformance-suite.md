@@ -33,12 +33,24 @@ Invalid fixture publication validation:
 FAIL source-no-manifest -> SSP_PACKAGE_INVALID
 FAIL broken-next -> SSP_NEXT_INVALID
 FAIL missing-entry-metadata -> SSP_ENTRY_MISSING
+FAIL missing-frontmatter -> SSP_AGENT_SKILL_INVALID
+FAIL malformed-frontmatter -> SSP_AGENT_SKILL_INVALID
+FAIL invalid-skill-name -> SSP_AGENT_SKILL_INVALID
+FAIL skill-name-mismatch -> SSP_AGENT_SKILL_INVALID
+FAIL invalid-description-shape -> SSP_AGENT_SKILL_INVALID
+FAIL empty-compatibility -> SSP_AGENT_SKILL_INVALID
+FAIL invalid-compatibility-scalar -> SSP_AGENT_SKILL_INVALID
+FAIL invalid-metadata-shape -> SSP_AGENT_SKILL_INVALID
+FAIL invalid-metadata-scalar -> SSP_AGENT_SKILL_INVALID
 FAIL missing-fallback -> SSP_PACKAGE_INVALID
+FAIL empty-fallback -> SSP_PACKAGE_INVALID
 FAIL invalid-manifest-json -> SSP_PACKAGE_INVALID
 FAIL manifest-entry-mismatch -> SSP_MANIFEST_MISMATCH
 FAIL required-extension-mismatch -> SSP_MANIFEST_MISMATCH
 FAIL resource-path-escape -> SSP_RESOURCE_UNREADABLE
 FAIL resource-directory -> SSP_RESOURCE_UNREADABLE
+FAIL malformed-resources-section -> SSP_RESOURCE_UNREADABLE
+FAIL empty-instructions -> SSP_STEP_MISSING_SECTION
 FAIL missing-handoff -> SSP_HANDOFF_MISSING
 FAIL unreachable-step -> SSP_CHAIN_UNREACHABLE_STEP
 FAIL unsupported-major-version -> SSP_VERSION_UNSUPPORTED
@@ -50,6 +62,7 @@ FAIL ssp-resource-access -> SSP_RESOURCE_UNREADABLE
 FAIL duplicate-manifest-path -> SSP_MANIFEST_MISMATCH
 FAIL invalid-required-extensions-type -> SSP_MANIFEST_MISMATCH
 FAIL next-directory -> SSP_NEXT_INVALID
+FAIL next-with-prose -> SSP_NEXT_INVALID
 FAIL next-url -> SSP_NEXT_INVALID
 FAIL next-query -> SSP_NEXT_INVALID
 FAIL next-absolute-path -> SSP_NEXT_INVALID
@@ -83,12 +96,24 @@ Executable invalid fixtures:
 - `conformance/fixtures/source-no-manifest/` as a publication fixture without manifest
 - `conformance/fixtures/broken-next/`
 - `conformance/fixtures/missing-entry-metadata/`
+- `conformance/fixtures/missing-frontmatter/`
+- `conformance/fixtures/malformed-frontmatter/`
+- `conformance/fixtures/invalid-skill-name/`
+- `conformance/fixtures/skill-name-mismatch/`
+- `conformance/fixtures/invalid-description-shape/`
+- `conformance/fixtures/empty-compatibility/`
+- `conformance/fixtures/invalid-compatibility-scalar/`
+- `conformance/fixtures/invalid-metadata-shape/`
+- `conformance/fixtures/invalid-metadata-scalar/`
 - `conformance/fixtures/missing-fallback/`
+- `conformance/fixtures/empty-fallback/`
 - `conformance/fixtures/invalid-manifest-json/`
 - `conformance/fixtures/manifest-entry-mismatch/`
 - `conformance/fixtures/required-extension-mismatch/`
 - `conformance/fixtures/resource-path-escape/`
 - `conformance/fixtures/resource-directory/`
+- `conformance/fixtures/malformed-resources-section/`
+- `conformance/fixtures/empty-instructions/`
 - `conformance/fixtures/missing-handoff/`
 - `conformance/fixtures/unreachable-step/`
 - `conformance/fixtures/unsupported-major-version/`
@@ -100,6 +125,7 @@ Executable invalid fixtures:
 - `conformance/fixtures/duplicate-manifest-path/`
 - `conformance/fixtures/invalid-required-extensions-type/`
 - `conformance/fixtures/next-directory/`
+- `conformance/fixtures/next-with-prose/`
 - `conformance/fixtures/next-url/`
 - `conformance/fixtures/next-query/`
 - `conformance/fixtures/next-absolute-path/`
@@ -140,12 +166,24 @@ Required checks:
 | `conformance/fixtures/source-no-manifest` | Omit generated `.ssp/manifest.json` | `SSP_PACKAGE_INVALID` | fail in publication mode |
 | `conformance/fixtures/broken-next` | Change `steps/evaluate.md` body `Next` to `steps/missing.md` | `SSP_NEXT_INVALID` | fail |
 | `conformance/fixtures/missing-entry-metadata` | Remove `metadata.stepped-skill.entry` from `SKILL.md` | `SSP_ENTRY_MISSING` | fail |
+| `conformance/fixtures/missing-frontmatter` | Remove `SKILL.md` frontmatter | `SSP_AGENT_SKILL_INVALID` | fail |
+| `conformance/fixtures/malformed-frontmatter` | Leave `SKILL.md` frontmatter unclosed | `SSP_AGENT_SKILL_INVALID` | fail |
+| `conformance/fixtures/invalid-skill-name` | Set `SKILL.md` name to a value that violates Agent Skills naming rules | `SSP_AGENT_SKILL_INVALID` | fail |
+| `conformance/fixtures/skill-name-mismatch` | Set `SKILL.md` name to a valid value that does not match the package directory | `SSP_AGENT_SKILL_INVALID` | fail |
+| `conformance/fixtures/invalid-description-shape` | Set `description` to an array instead of a string | `SSP_AGENT_SKILL_INVALID` | fail |
+| `conformance/fixtures/empty-compatibility` | Add an empty `compatibility` field to `SKILL.md` | `SSP_AGENT_SKILL_INVALID` | fail |
+| `conformance/fixtures/invalid-compatibility-scalar` | Set `compatibility` to an unquoted YAML boolean | `SSP_AGENT_SKILL_INVALID` | fail |
+| `conformance/fixtures/invalid-metadata-shape` | Add a non-string metadata value to `SKILL.md` | `SSP_AGENT_SKILL_INVALID` | fail |
+| `conformance/fixtures/invalid-metadata-scalar` | Add an unquoted numeric metadata value to `SKILL.md` | `SSP_AGENT_SKILL_INVALID` | fail |
 | `conformance/fixtures/missing-fallback` | Remove `## Fallback Workflow` from `SKILL.md` | `SSP_PACKAGE_INVALID` | fail |
+| `conformance/fixtures/empty-fallback` | Leave `## Fallback Workflow` empty | `SSP_PACKAGE_INVALID` | fail |
 | `conformance/fixtures/invalid-manifest-json` | Make `.ssp/manifest.json` malformed JSON | `SSP_PACKAGE_INVALID` | fail |
 | `conformance/fixtures/manifest-entry-mismatch` | Make manifest `entry` disagree with `SKILL.md` | `SSP_MANIFEST_MISMATCH` | fail |
 | `conformance/fixtures/required-extension-mismatch` | Make manifest `requiredExtensions` disagree with `SKILL.md` | `SSP_MANIFEST_MISMATCH` | fail |
 | `conformance/fixtures/resource-path-escape` | Declare `../outside.md` as a step resource | `SSP_RESOURCE_UNREADABLE` | fail |
 | `conformance/fixtures/resource-directory` | Declare a directory as a step resource | `SSP_RESOURCE_UNREADABLE` | fail |
+| `conformance/fixtures/malformed-resources-section` | Write prose in `Resources` instead of `None` or a bullet path list | `SSP_RESOURCE_UNREADABLE` | fail |
+| `conformance/fixtures/empty-instructions` | Leave a required step `Instructions` section empty | `SSP_STEP_MISSING_SECTION` | fail |
 | `conformance/fixtures/missing-handoff` | Set non-terminal `Handoff` to `None.` | `SSP_HANDOFF_MISSING` | fail |
 | `conformance/fixtures/unreachable-step` | Include `steps/orphan.md` outside the entry chain | `SSP_CHAIN_UNREACHABLE_STEP` | fail |
 | `conformance/fixtures/unsupported-major-version` | Declare SSP version `1.0` | `SSP_VERSION_UNSUPPORTED` | fail |
@@ -157,6 +195,7 @@ Required checks:
 | `conformance/fixtures/duplicate-manifest-path` | Include the same step path twice in manifest `steps` | `SSP_MANIFEST_MISMATCH` | fail |
 | `conformance/fixtures/invalid-required-extensions-type` | Make manifest `requiredExtensions` a string instead of an array | `SSP_MANIFEST_MISMATCH` | fail |
 | `conformance/fixtures/next-directory` | Set `Next` to `steps/` instead of a step file | `SSP_NEXT_INVALID` | fail |
+| `conformance/fixtures/next-with-prose` | Add explanatory prose around the `Next` target | `SSP_NEXT_INVALID` | fail |
 | `conformance/fixtures/next-url` | Set `Next` to `https://example.com/step.md` | `SSP_NEXT_INVALID` | fail |
 | `conformance/fixtures/next-query` | Add a query fragment to `Next` | `SSP_NEXT_INVALID` | fail |
 | `conformance/fixtures/next-absolute-path` | Set `Next` to an absolute path | `SSP_NEXT_INVALID` | fail |
@@ -199,12 +238,24 @@ A minimum SSP v0 validator passes this suite when it can:
 - reject `source-no-manifest` in publication mode with `SSP_PACKAGE_INVALID`;
 - reject `broken-next` with `SSP_NEXT_INVALID`;
 - reject `missing-entry-metadata` with `SSP_ENTRY_MISSING`;
+- reject `missing-frontmatter` with `SSP_AGENT_SKILL_INVALID`;
+- reject `malformed-frontmatter` with `SSP_AGENT_SKILL_INVALID`;
+- reject `invalid-skill-name` with `SSP_AGENT_SKILL_INVALID`;
+- reject `skill-name-mismatch` with `SSP_AGENT_SKILL_INVALID`;
+- reject `invalid-description-shape` with `SSP_AGENT_SKILL_INVALID`;
+- reject `empty-compatibility` with `SSP_AGENT_SKILL_INVALID`;
+- reject `invalid-compatibility-scalar` with `SSP_AGENT_SKILL_INVALID`;
+- reject `invalid-metadata-shape` with `SSP_AGENT_SKILL_INVALID`;
+- reject `invalid-metadata-scalar` with `SSP_AGENT_SKILL_INVALID`;
 - reject `missing-fallback` with `SSP_PACKAGE_INVALID`;
+- reject `empty-fallback` with `SSP_PACKAGE_INVALID`;
 - reject `invalid-manifest-json` with `SSP_PACKAGE_INVALID`;
 - reject `manifest-entry-mismatch` with `SSP_MANIFEST_MISMATCH`;
 - reject `required-extension-mismatch` with `SSP_MANIFEST_MISMATCH`;
 - reject `resource-path-escape` with `SSP_RESOURCE_UNREADABLE`;
 - reject `resource-directory` with `SSP_RESOURCE_UNREADABLE`;
+- reject `malformed-resources-section` with `SSP_RESOURCE_UNREADABLE`;
+- reject `empty-instructions` with `SSP_STEP_MISSING_SECTION`;
 - reject `missing-handoff` with `SSP_HANDOFF_MISSING`;
 - reject `unreachable-step` with `SSP_CHAIN_UNREACHABLE_STEP`;
 - reject `unsupported-major-version` with `SSP_VERSION_UNSUPPORTED`;
@@ -216,6 +267,7 @@ A minimum SSP v0 validator passes this suite when it can:
 - reject `duplicate-manifest-path` with `SSP_MANIFEST_MISMATCH`;
 - reject `invalid-required-extensions-type` with `SSP_MANIFEST_MISMATCH`;
 - reject `next-directory` with `SSP_NEXT_INVALID`;
+- reject `next-with-prose` with `SSP_NEXT_INVALID`;
 - reject `next-url` with `SSP_NEXT_INVALID`;
 - reject `next-query` with `SSP_NEXT_INVALID`;
 - reject `next-absolute-path` with `SSP_NEXT_INVALID`;
@@ -234,8 +286,8 @@ Current prototype status:
 - accepts `multi-phase-review`;
 - accepts `source-no-manifest` in source mode;
 - supports `--mode source` and `--mode publication`;
-- rejects executable invalid fixtures for missing entry, missing fallback, invalid manifest JSON, manifest mismatch, unsafe resources, missing handoff, unreachable step, unsupported version, unsupported extension, cyclic chain, generated frontmatter mismatch, duplicate manifest paths, invalid extension field types, entry path traversal, directory-like `Next`, malformed `Next` paths, and malformed resource paths.
-- `run-conformance.mjs` verifies source validation, publication validation, and invalid fixture expectations in one command.
+- rejects executable invalid fixtures for base Agent Skills compatibility, missing entry, missing fallback, invalid manifest JSON, manifest mismatch, unsafe resources, missing handoff, unreachable step, unsupported version, unsupported extension, cyclic chain, generated frontmatter mismatch, duplicate manifest paths, invalid extension field types, entry path traversal, directory-like `Next`, malformed `Next` paths, and malformed resource paths.
+- `run-conformance.mjs` verifies source validation, publication validation, and parsed invalid fixture issue codes in one command.
 
 ## 6. Expansion Plan
 
