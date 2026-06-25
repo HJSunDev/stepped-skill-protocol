@@ -1,0 +1,25 @@
+{
+  "protocol": "stepped-skill",
+  "version": "0.1",
+  "entry": "steps/collect.md",
+  "steps": [
+    {
+      "id": "collect",
+      "path": "steps/collect.md",
+      "next": "steps/synthesize.md",
+      "resources": ["references/source-guidelines.md"]
+    },
+    {
+      "id": "synthesize",
+      "path": "steps/synthesize.md",
+      "next": "steps/finalize.md",
+      "resources": []
+    },
+    {
+      "id": "finalize",
+      "path": "steps/finalize.md",
+      "next": "END",
+      "resources": []
+    }
+  ]
+}

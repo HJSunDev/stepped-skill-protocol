@@ -1,0 +1,37 @@
+{
+  "protocol": "stepped-skill",
+  "version": "0.1",
+  "entry": "steps/intake.md",
+  "steps": [
+    {
+      "id": "intake",
+      "path": "steps/intake.md",
+      "next": "steps/inspect.md",
+      "resources": ["references/review-rubric.md"]
+    },
+    {
+      "id": "inspect",
+      "path": "steps/inspect.md",
+      "next": "steps/evaluate.md",
+      "resources": ["references/review-rubric.md"]
+    },
+    {
+      "id": "evaluate",
+      "path": "steps/evaluate.md",
+      "next": "steps/recommendations.md",
+      "resources": ["references/severity-scale.md"]
+    },
+    {
+      "id": "recommendations",
+      "path": "steps/recommendations.md",
+      "next": "steps/final-report.md",
+      "resources": ["references/severity-scale.md"]
+    },
+    {
+      "id": "final-report",
+      "path": "steps/final-report.md",
+      "next": "END",
+      "resources": []
+    }
+  ]
+}
