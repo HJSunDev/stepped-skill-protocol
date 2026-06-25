@@ -84,7 +84,7 @@ Minimum shape:
 name: example-stepped-skill
 description: Use when the user needs a staged result with clear phase boundaries.
 metadata:
-  stepped-skill.protocol: "0.1"
+  stepped-skill.version: "0.1"
   stepped-skill.entry: "steps/collect.md"
 ---
 

@@ -303,7 +303,7 @@ Canonical rules:
 - Skill root is the directory containing `SKILL.md`.
 - All protocol paths MUST be relative to skill root.
 - Protocol paths MUST use `/` as separator.
-- Protocol paths MUST NOT start with `/`, contain drive letters, contain `..`, contain query/hash fragments, or be URLs.
+- Protocol paths MUST NOT start with `/`, contain drive letters, contain backslashes, contain `..`, contain query/hash fragments, or be URLs.
 - Step files MUST live under `steps/` and end with `.md`.
 - `Resources` entries MUST point to files, not directories.
 - `Resources` entries MUST NOT point into `.ssp/`.
@@ -1326,10 +1326,19 @@ Stop or redesign if:
 
 ## 19. Reference Baselines
 
-- [Agent Skills Overview](https://agentskills.io/home)：Skill 是包含 `SKILL.md` 的目录，可携带脚本、参考资料、模板等资源。
-- [Agent Skills Specification](https://agentskills.io/specification)：现有 Skills 使用 metadata / instructions / resources 的 progressive disclosure。
-- [Anthropic Agent Skills docs](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)：Claude 侧对 Agent Skills 的官方产品说明。
-- [Anthropic: Building effective agents](https://www.anthropic.com/research/building-effective-agents)：prompt chaining 适合能清晰拆成固定子任务的场景，用延迟换更高准确率。
+SSP must stay grounded in the existing Agent Skills model. Current primary reference points:
+
+- [Anthropic Agent Skills docs](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)：Skills are filesystem-based resources loaded through progressive disclosure: metadata first, `SKILL.md` body on activation, and resources/code only as needed.
+- [Agent Skills Specification](https://agentskills.io/specification)：`SKILL.md` uses YAML frontmatter with required `name` and `description`; optional `metadata` is a string-to-string map; file references should be skill-root relative; resources are loaded on demand.
+- [anthropics/skills](https://github.com/anthropics/skills)：Anthropic's public Skills repository shows Skills as self-contained directories with `SKILL.md`, instructions, metadata, scripts, and resources.
+- [Anthropic: Building effective agents](https://www.anthropic.com/research/building-effective-agents)：prompt chaining is recommended for work that can be cleanly decomposed into fixed subtasks, trading latency for higher accuracy.
+
+Compatibility consequences:
+
+- SSP metadata belongs under the existing optional `metadata` map, using the `stepped-skill.*` namespace.
+- SSP step files are ordinary skill-root relative files, not a new packaging primitive.
+- SSP L1 execution relies on the same on-demand file access pattern as Agent Skills progressive disclosure.
+- SSP does not claim prompt chaining research proves the protocol's value; it only supports the plausibility of fixed-phase execution. SSP value still requires M1 A/B evaluation against ordinary Skills.
 
 ## 20. 暂定结论
 
