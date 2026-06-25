@@ -17,8 +17,20 @@ node tools/run-conformance.mjs
 Expected result:
 
 ```text
+Source validation:
 PASS research-brief
 PASS multi-phase-review
+PASS source-no-manifest
+
+Publication validation:
+PASS research-brief
+PASS multi-phase-review
+
+CRLF frontmatter validation:
+PASS research-brief-crlf
+
+Invalid fixture publication validation:
+FAIL source-no-manifest -> SSP_PACKAGE_INVALID
 FAIL broken-next -> SSP_NEXT_INVALID
 FAIL missing-entry-metadata -> SSP_ENTRY_MISSING
 FAIL missing-fallback -> SSP_PACKAGE_INVALID
@@ -32,6 +44,20 @@ FAIL unreachable-step -> SSP_CHAIN_UNREACHABLE_STEP
 FAIL unsupported-major-version -> SSP_VERSION_UNSUPPORTED
 FAIL unsupported-required-extension -> SSP_EXTENSION_UNSUPPORTED
 FAIL cyclic-chain -> SSP_CHAIN_CYCLE
+FAIL frontmatter-next-mismatch -> SSP_MANIFEST_MISMATCH
+FAIL entry-path-traversal -> SSP_ENTRY_MISSING
+FAIL ssp-resource-access -> SSP_RESOURCE_UNREADABLE
+FAIL duplicate-manifest-path -> SSP_MANIFEST_MISMATCH
+FAIL invalid-required-extensions-type -> SSP_MANIFEST_MISMATCH
+FAIL next-directory -> SSP_NEXT_INVALID
+FAIL next-url -> SSP_NEXT_INVALID
+FAIL next-query -> SSP_NEXT_INVALID
+FAIL next-absolute-path -> SSP_NEXT_INVALID
+FAIL next-backslash-path -> SSP_NEXT_INVALID
+FAIL resource-url -> SSP_RESOURCE_UNREADABLE
+FAIL resource-query -> SSP_RESOURCE_UNREADABLE
+FAIL resource-absolute-path -> SSP_RESOURCE_UNREADABLE
+FAIL frontmatter-resource-mismatch -> SSP_MANIFEST_MISMATCH
 PASS SSP v0 conformance suite draft
 ```
 
@@ -48,8 +74,13 @@ Valid fixtures:
 - `research-brief/`
 - `multi-phase-review/`
 
+Source-only valid fixtures:
+
+- `conformance/fixtures/source-no-manifest/`
+
 Executable invalid fixtures:
 
+- `conformance/fixtures/source-no-manifest/` as a publication fixture without manifest
 - `conformance/fixtures/broken-next/`
 - `conformance/fixtures/missing-entry-metadata/`
 - `conformance/fixtures/missing-fallback/`
@@ -63,6 +94,20 @@ Executable invalid fixtures:
 - `conformance/fixtures/unsupported-major-version/`
 - `conformance/fixtures/unsupported-required-extension/`
 - `conformance/fixtures/cyclic-chain/`
+- `conformance/fixtures/frontmatter-next-mismatch/`
+- `conformance/fixtures/entry-path-traversal/`
+- `conformance/fixtures/ssp-resource-access/`
+- `conformance/fixtures/duplicate-manifest-path/`
+- `conformance/fixtures/invalid-required-extensions-type/`
+- `conformance/fixtures/next-directory/`
+- `conformance/fixtures/next-url/`
+- `conformance/fixtures/next-query/`
+- `conformance/fixtures/next-absolute-path/`
+- `conformance/fixtures/next-backslash-path/`
+- `conformance/fixtures/resource-url/`
+- `conformance/fixtures/resource-query/`
+- `conformance/fixtures/resource-absolute-path/`
+- `conformance/fixtures/frontmatter-resource-mismatch/`
 
 Invalid fixture description:
 
@@ -72,12 +117,14 @@ Invalid fixture description:
 
 | Fixture | Expected Package Level | Expected Entry | Expected Terminal | Expected Result |
 | --- | --- | --- | --- | --- |
-| `research-brief` | L2-ready with manifest | `steps/collect.md` | `steps/finalize.md` | pass |
-| `multi-phase-review` | L2-ready with manifest | `steps/intake.md` | `steps/final-report.md` | pass |
+| `research-brief` | L2-ready with manifest | `steps/collect.md` | `steps/finalize.md` | pass in source and publication mode |
+| `multi-phase-review` | L2-ready with manifest | `steps/intake.md` | `steps/final-report.md` | pass in source and publication mode |
+| `source-no-manifest` | L1-ready source package | `steps/start.md` | `steps/start.md` | pass in source mode only |
 
 Required checks:
 
 - ordinary Agent Skill compatibility;
+- LF and CRLF frontmatter compatibility;
 - L0 fallback exists;
 - SSP metadata exists;
 - all reachable steps have required sections;
@@ -90,6 +137,7 @@ Required checks:
 
 | Fixture | Mutation | Expected Code | Expected Result |
 | --- | --- | --- | --- |
+| `conformance/fixtures/source-no-manifest` | Omit generated `.ssp/manifest.json` | `SSP_PACKAGE_INVALID` | fail in publication mode |
 | `conformance/fixtures/broken-next` | Change `steps/evaluate.md` body `Next` to `steps/missing.md` | `SSP_NEXT_INVALID` | fail |
 | `conformance/fixtures/missing-entry-metadata` | Remove `metadata.stepped-skill.entry` from `SKILL.md` | `SSP_ENTRY_MISSING` | fail |
 | `conformance/fixtures/missing-fallback` | Remove `## Fallback Workflow` from `SKILL.md` | `SSP_PACKAGE_INVALID` | fail |
@@ -103,6 +151,20 @@ Required checks:
 | `conformance/fixtures/unsupported-major-version` | Declare SSP version `1.0` | `SSP_VERSION_UNSUPPORTED` | fail |
 | `conformance/fixtures/unsupported-required-extension` | Declare unknown `example.branching` required extension | `SSP_EXTENSION_UNSUPPORTED` | fail |
 | `conformance/fixtures/cyclic-chain` | Create `start -> loop -> start` | `SSP_CHAIN_CYCLE` | fail |
+| `conformance/fixtures/frontmatter-next-mismatch` | Make generated step frontmatter `ssp.next` disagree with body `Next` | `SSP_MANIFEST_MISMATCH` | fail |
+| `conformance/fixtures/entry-path-traversal` | Set `metadata.stepped-skill.entry` to `../outside.md` | `SSP_ENTRY_MISSING` | fail |
+| `conformance/fixtures/ssp-resource-access` | Declare `.ssp/secret.md` as a step resource | `SSP_RESOURCE_UNREADABLE` | fail |
+| `conformance/fixtures/duplicate-manifest-path` | Include the same step path twice in manifest `steps` | `SSP_MANIFEST_MISMATCH` | fail |
+| `conformance/fixtures/invalid-required-extensions-type` | Make manifest `requiredExtensions` a string instead of an array | `SSP_MANIFEST_MISMATCH` | fail |
+| `conformance/fixtures/next-directory` | Set `Next` to `steps/` instead of a step file | `SSP_NEXT_INVALID` | fail |
+| `conformance/fixtures/next-url` | Set `Next` to `https://example.com/step.md` | `SSP_NEXT_INVALID` | fail |
+| `conformance/fixtures/next-query` | Add a query fragment to `Next` | `SSP_NEXT_INVALID` | fail |
+| `conformance/fixtures/next-absolute-path` | Set `Next` to an absolute path | `SSP_NEXT_INVALID` | fail |
+| `conformance/fixtures/next-backslash-path` | Use a backslash separator in `Next` | `SSP_NEXT_INVALID` | fail |
+| `conformance/fixtures/resource-url` | Declare a URL as a step resource | `SSP_RESOURCE_UNREADABLE` | fail |
+| `conformance/fixtures/resource-query` | Add a query fragment to a step resource | `SSP_RESOURCE_UNREADABLE` | fail |
+| `conformance/fixtures/resource-absolute-path` | Declare an absolute path as a step resource | `SSP_RESOURCE_UNREADABLE` | fail |
+| `conformance/fixtures/frontmatter-resource-mismatch` | Make generated step frontmatter resources disagree with body `Resources` | `SSP_MANIFEST_MISMATCH` | fail |
 
 Expected validator detail for `broken-next`:
 
@@ -133,6 +195,8 @@ Each fixture should define:
 A minimum SSP v0 validator passes this suite when it can:
 
 - accept both valid fixtures;
+- accept `source-no-manifest` in source mode;
+- reject `source-no-manifest` in publication mode with `SSP_PACKAGE_INVALID`;
 - reject `broken-next` with `SSP_NEXT_INVALID`;
 - reject `missing-entry-metadata` with `SSP_ENTRY_MISSING`;
 - reject `missing-fallback` with `SSP_PACKAGE_INVALID`;
@@ -146,6 +210,20 @@ A minimum SSP v0 validator passes this suite when it can:
 - reject `unsupported-major-version` with `SSP_VERSION_UNSUPPORTED`;
 - reject `unsupported-required-extension` with `SSP_EXTENSION_UNSUPPORTED`;
 - reject `cyclic-chain` with `SSP_CHAIN_CYCLE`;
+- reject `frontmatter-next-mismatch` with `SSP_MANIFEST_MISMATCH`;
+- reject `entry-path-traversal` with `SSP_ENTRY_MISSING`;
+- reject `ssp-resource-access` with `SSP_RESOURCE_UNREADABLE`;
+- reject `duplicate-manifest-path` with `SSP_MANIFEST_MISMATCH`;
+- reject `invalid-required-extensions-type` with `SSP_MANIFEST_MISMATCH`;
+- reject `next-directory` with `SSP_NEXT_INVALID`;
+- reject `next-url` with `SSP_NEXT_INVALID`;
+- reject `next-query` with `SSP_NEXT_INVALID`;
+- reject `next-absolute-path` with `SSP_NEXT_INVALID`;
+- reject `next-backslash-path` with `SSP_NEXT_INVALID`;
+- reject `resource-url` with `SSP_RESOURCE_UNREADABLE`;
+- reject `resource-query` with `SSP_RESOURCE_UNREADABLE`;
+- reject `resource-absolute-path` with `SSP_RESOURCE_UNREADABLE`;
+- reject `frontmatter-resource-mismatch` with `SSP_MANIFEST_MISMATCH`;
 - project the same chains as `expected-chain.md`;
 - produce stable issue output for invalid fixtures;
 - distinguish source validation from publication validation.
@@ -154,19 +232,17 @@ Current prototype status:
 
 - accepts `research-brief`;
 - accepts `multi-phase-review`;
-- rejects executable invalid fixtures for missing entry, missing fallback, invalid manifest JSON, manifest mismatch, unsafe resources, missing handoff, unreachable step, unsupported version, unsupported extension, and cyclic chain.
-- `run-conformance.mjs` verifies those expectations in one command.
+- accepts `source-no-manifest` in source mode;
+- supports `--mode source` and `--mode publication`;
+- rejects executable invalid fixtures for missing entry, missing fallback, invalid manifest JSON, manifest mismatch, unsafe resources, missing handoff, unreachable step, unsupported version, unsupported extension, cyclic chain, generated frontmatter mismatch, duplicate manifest paths, invalid extension field types, entry path traversal, directory-like `Next`, malformed `Next` paths, and malformed resource paths.
+- `run-conformance.mjs` verifies source validation, publication validation, and invalid fixture expectations in one command.
 
 ## 6. Expansion Plan
 
-Add future invalid fixtures for:
+Add future invalid fixtures when real authoring or implementation failures reveal new edge cases, especially:
 
-- generated step frontmatter mismatch;
-- malformed `Next` containing URL, query, hash, or absolute path;
-- `.ssp/` resource access;
-- duplicate manifest step paths;
-- invalid `requiredExtensions` type;
-- source validation mode without manifest.
+- invalid manifest `steps` shapes beyond duplicate paths;
+- L1 execution transcript fixtures once M1 runs exist.
 
 Product judgment:
 

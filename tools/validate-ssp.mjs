@@ -51,6 +51,7 @@ function isSafeProtocolPath(value) {
     value.length > 0 &&
     !value.startsWith("/") &&
     !/^[a-zA-Z]:/.test(value) &&
+    !value.includes("\\") &&
     !value.includes("..") &&
     !value.includes("?") &&
     !value.includes("#") &&
@@ -59,10 +60,15 @@ function isSafeProtocolPath(value) {
 }
 
 function parseFrontmatter(text) {
-  if (!text.startsWith("---\n")) return { fields: {}, metadata: {}, body: text };
-  const end = text.indexOf("\n---", 4);
+  const start = /^---\r?\n/.exec(text);
+  if (!start) return { fields: {}, metadata: {}, body: text };
+  const end = text.slice(start[0].length).search(/\r?\n---(?:\r?\n|$)/);
   if (end === -1) return { fields: {}, metadata: {}, body: text };
-  const yaml = text.slice(4, end).split(/\r?\n/);
+  const yamlStart = start[0].length;
+  const yamlEnd = yamlStart + end;
+  const close = /\r?\n---(?:\r?\n|$)/.exec(text.slice(yamlEnd));
+  const bodyStart = yamlEnd + (close?.[0].length ?? 0);
+  const yaml = text.slice(yamlStart, yamlEnd).split(/\r?\n/);
   const fields = {};
   const metadata = {};
   let inMetadata = false;
@@ -79,7 +85,58 @@ function parseFrontmatter(text) {
     if (inMetadata && nested) metadata[nested[1]] = stripQuotes(nested[2]);
   }
 
-  return { fields, metadata, body: text.slice(end + 5) };
+  return { fields, metadata, body: text.slice(bodyStart) };
+}
+
+function parseStepProjection(text) {
+  const start = /^---\r?\n/.exec(text);
+  if (!start) return null;
+  const end = text.slice(start[0].length).search(/\r?\n---(?:\r?\n|$)/);
+  if (end === -1) return null;
+
+  const yaml = text.slice(start[0].length, start[0].length + end).split(/\r?\n/);
+  const ssp = {};
+  let inSsp = false;
+  let inResources = false;
+
+  for (const line of yaml) {
+    if (/^\s*$/.test(line)) continue;
+
+    if (/^ssp:\s*$/.test(line)) {
+      inSsp = true;
+      inResources = false;
+      continue;
+    }
+
+    if (!line.startsWith(" ")) {
+      inSsp = false;
+      inResources = false;
+      continue;
+    }
+
+    if (!inSsp) continue;
+
+    const pair = /^\s+([A-Za-z0-9_.-]+):\s*(.*)$/.exec(line);
+    if (pair) {
+      const key = pair[1];
+      const value = pair[2].trim();
+      inResources = key === "resources";
+      if (inResources) {
+        ssp.resources = value === "[]" || value === "" ? [] : [stripQuotes(value)];
+      } else {
+        ssp[key] = stripQuotes(value);
+      }
+      continue;
+    }
+
+    const bullet = /^\s+-\s+["']?(.+?)["']?\s*$/.exec(line);
+    if (inResources && bullet) {
+      if (!Array.isArray(ssp.resources)) ssp.resources = [];
+      ssp.resources.push(bullet[1].trim());
+    }
+  }
+
+  return Object.keys(ssp).length > 0 ? ssp : null;
 }
 
 function stripQuotes(value) {
@@ -158,8 +215,10 @@ function listStepFiles(root) {
   return out.sort();
 }
 
-function validatePackage(rootInput) {
+function validatePackage(rootInput, options = {}) {
   const root = path.resolve(rootInput);
+  const mode = options.mode ?? "publication";
+  const publicationMode = mode === "publication";
   const issues = [];
   const skillPath = path.join(root, "SKILL.md");
 
@@ -192,33 +251,62 @@ function validatePackage(rootInput) {
   const metadataRequiredExtensions = parseRequiredExtensionMetadata(skill.metadata["stepped-skill.required-extensions"]);
   let manifest = null;
   const manifestPath = packagePath(root, ".ssp/manifest.json");
-  if (exists(manifestPath)) {
+  if (publicationMode && exists(manifestPath)) {
     try {
       manifest = JSON.parse(readText(manifestPath));
     } catch (error) {
       issues.push(issue("SSP_PACKAGE_INVALID", ".ssp/manifest.json", "json", "valid JSON", error.message, "Manifest is not valid JSON.", "Regenerate the manifest."));
     }
-  } else {
+  } else if (publicationMode) {
     issues.push(issue("SSP_PACKAGE_INVALID", ".ssp/manifest.json", "file", "present", "missing", "Manifest is missing for publication validation.", "Generate .ssp/manifest.json."));
   }
 
-  const manifestRequiredExtensions = Array.isArray(manifest?.requiredExtensions) ? manifest.requiredExtensions : [];
-  const requiredExtensions = [...new Set([...metadataRequiredExtensions, ...manifestRequiredExtensions])];
-  for (const extension of requiredExtensions) {
-    if (!SUPPORTED_REQUIRED_EXTENSIONS.has(extension)) {
-      issues.push(issue("SSP_EXTENSION_UNSUPPORTED", ".ssp/manifest.json", "requiredExtensions", "known supported extension", extension, "Required extension is unknown.", "Remove the required extension or use a validator/runtime that supports it."));
+  let manifestRequiredExtensions = [];
+  if (publicationMode && manifest?.requiredExtensions !== undefined) {
+    if (Array.isArray(manifest.requiredExtensions)) {
+      manifestRequiredExtensions = manifest.requiredExtensions;
+    } else {
+      issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", "requiredExtensions", "array of extension ids", typeof manifest.requiredExtensions, "Manifest requiredExtensions must be an array.", "Regenerate manifest with requiredExtensions as an array."));
     }
   }
-  if (manifest && JSON.stringify(metadataRequiredExtensions) !== JSON.stringify(manifestRequiredExtensions)) {
+  const requiredExtensions = [...new Set([...metadataRequiredExtensions, ...manifestRequiredExtensions])];
+  if (publicationMode) {
+    for (const extension of requiredExtensions) {
+      if (!SUPPORTED_REQUIRED_EXTENSIONS.has(extension)) {
+        issues.push(issue("SSP_EXTENSION_UNSUPPORTED", ".ssp/manifest.json", "requiredExtensions", "known supported extension", extension, "Required extension is unknown.", "Remove the required extension or use a validator/runtime that supports it."));
+      }
+    }
+  }
+  if (publicationMode && manifest && JSON.stringify(metadataRequiredExtensions) !== JSON.stringify(manifestRequiredExtensions)) {
     issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", "requiredExtensions", JSON.stringify(metadataRequiredExtensions), JSON.stringify(manifestRequiredExtensions), "Manifest requiredExtensions do not match SKILL.md metadata.", "Regenerate manifest."));
   }
-  if (manifest) {
+  if (publicationMode && manifest) {
     if (!manifest.version) {
       issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", "version", skillVersion ?? "supported version", "missing", "Manifest version is missing.", "Regenerate manifest."));
     } else if (!isSupportedVersion(manifest.version)) {
       issues.push(issue("SSP_VERSION_UNSUPPORTED", ".ssp/manifest.json", "version", `${SUPPORTED_MAJOR_VERSION}.x`, manifest.version, "Manifest SSP major version is unsupported.", "Use a supported SSP version or upgrade the validator/runtime."));
     } else if (skillVersion && manifest.version !== skillVersion) {
       issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", "version", skillVersion, manifest.version, "Manifest version does not match SKILL.md metadata.", "Regenerate manifest."));
+    }
+    if (!Array.isArray(manifest.steps)) {
+      issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", "steps", "array", typeof manifest.steps, "Manifest steps must be an array.", "Regenerate manifest."));
+    } else {
+      const seenManifestPaths = new Set();
+      const seenManifestIds = new Set();
+      for (const step of manifest.steps) {
+        if (step?.path) {
+          if (seenManifestPaths.has(step.path)) {
+            issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", "steps.path", "unique step paths", step.path, "Manifest contains a duplicate step path.", "Regenerate manifest from the source chain."));
+          }
+          seenManifestPaths.add(step.path);
+        }
+        if (step?.id) {
+          if (seenManifestIds.has(step.id)) {
+            issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", "steps.id", "unique step ids", step.id, "Manifest contains a duplicate step id.", "Regenerate manifest from the source chain."));
+          }
+          seenManifestIds.add(step.id);
+        }
+      }
     }
   }
 
@@ -262,7 +350,7 @@ function validatePackage(rootInput) {
     }
 
     const next = parseNext(body);
-    const manifestStep = manifest?.steps?.find((step) => step.path === current);
+    const manifestStep = Array.isArray(manifest?.steps) ? manifest.steps.find((step) => step.path === current) : null;
     const expectedNext = manifestStep?.next;
     let invalidNext = false;
     if (!next) {
@@ -270,7 +358,7 @@ function validatePackage(rootInput) {
       chainBroken = true;
       break;
     }
-    if (expectedNext && next !== expectedNext) {
+    if (publicationMode && expectedNext && next !== expectedNext) {
       issues.push(issue("SSP_NEXT_INVALID", current, "Next", expectedNext, next, "Body Next does not match manifest next.", "Update body Next or regenerate manifest from source."));
       invalidNext = true;
     }
@@ -292,6 +380,25 @@ function validatePackage(rootInput) {
       }
     }
 
+    if (publicationMode) {
+      const stepProjection = parseStepProjection(body);
+      if (stepProjection) {
+        const expectedId = generatedStepId(current);
+        if (stepProjection.version && skillVersion && stepProjection.version !== skillVersion) {
+          issues.push(issue("SSP_MANIFEST_MISMATCH", current, "frontmatter.ssp.version", skillVersion, stepProjection.version, "Step frontmatter version does not match SKILL.md metadata.", "Regenerate step frontmatter."));
+        }
+        if (stepProjection.id && stepProjection.id !== expectedId) {
+          issues.push(issue("SSP_MANIFEST_MISMATCH", current, "frontmatter.ssp.id", expectedId, stepProjection.id, "Step frontmatter id does not match the canonical step id.", "Regenerate step frontmatter."));
+        }
+        if (stepProjection.next && next && stepProjection.next !== next) {
+          issues.push(issue("SSP_MANIFEST_MISMATCH", current, "frontmatter.ssp.next", next, stepProjection.next, "Step frontmatter next does not match body Next.", "Regenerate step frontmatter."));
+        }
+        if (Array.isArray(stepProjection.resources) && JSON.stringify(stepProjection.resources) !== JSON.stringify(resources)) {
+          issues.push(issue("SSP_MANIFEST_MISMATCH", current, "frontmatter.ssp.resources", JSON.stringify(resources), JSON.stringify(stepProjection.resources), "Step frontmatter resources do not match body Resources.", "Regenerate step frontmatter."));
+        }
+      }
+    }
+
     if (next !== "END") {
       const handoff = sectionBody(body, "Handoff");
       if (!handoff || /^None\.?$/i.test(handoff.trim())) {
@@ -308,14 +415,14 @@ function validatePackage(rootInput) {
     current = next;
   }
 
-  if (manifest && !chainBroken) {
+  if (publicationMode && manifest && !chainBroken) {
     if (manifest.protocol !== "stepped-skill") {
       issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", "protocol", "stepped-skill", manifest.protocol, "Manifest protocol is invalid.", "Set protocol to stepped-skill."));
     }
     if (manifest.entry !== entry) {
       issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", "entry", entry, manifest.entry, "Manifest entry does not match SKILL.md.", "Regenerate manifest."));
     }
-    const actualManifestSteps = manifest.steps ?? [];
+    const actualManifestSteps = Array.isArray(manifest.steps) ? manifest.steps : [];
     const expectedPaths = projected.map((step) => step.path);
     const actualPaths = actualManifestSteps.map((step) => step.path);
     if (JSON.stringify(expectedPaths) !== JSON.stringify(actualPaths)) {
@@ -333,7 +440,7 @@ function validatePackage(rootInput) {
     }
   }
 
-  if (!chainBroken) {
+  if (publicationMode && !chainBroken) {
     const reachable = new Set(projected.map((step) => step.path));
     for (const stepFile of listStepFiles(root)) {
       if (!reachable.has(stepFile)) {
@@ -346,14 +453,36 @@ function validatePackage(rootInput) {
 }
 
 const args = process.argv.slice(2);
-if (args.length === 0) {
-  console.error("Usage: node validate-ssp.mjs <skill-package> [<skill-package> ...]");
+let mode = "publication";
+const packageArgs = [];
+
+for (let index = 0; index < args.length; index += 1) {
+  const arg = args[index];
+  if (arg === "--mode") {
+    mode = args[index + 1];
+    index += 1;
+    continue;
+  }
+  if (arg.startsWith("--mode=")) {
+    mode = arg.slice("--mode=".length);
+    continue;
+  }
+  packageArgs.push(arg);
+}
+
+if (!new Set(["source", "publication"]).has(mode)) {
+  console.error("Invalid mode. Use --mode source or --mode publication.");
+  process.exit(2);
+}
+
+if (packageArgs.length === 0) {
+  console.error("Usage: node validate-ssp.mjs [--mode source|publication] <skill-package> [<skill-package> ...]");
   process.exit(2);
 }
 
 let failed = false;
-for (const arg of args) {
-  const result = validatePackage(arg);
+for (const arg of packageArgs) {
+  const result = validatePackage(arg, { mode });
   const label = path.relative(process.cwd(), result.root) || result.root;
   if (result.ok) {
     console.log(`PASS ${label}`);

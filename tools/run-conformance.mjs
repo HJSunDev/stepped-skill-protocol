@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -13,7 +15,15 @@ const validFixtures = [
   "examples/multi-phase-review",
 ];
 
+const sourceOnlyFixtures = [
+  "conformance/fixtures/source-no-manifest",
+];
+
 const invalidFixtures = [
+  {
+    path: "conformance/fixtures/source-no-manifest",
+    expectedCode: "SSP_PACKAGE_INVALID",
+  },
   {
     path: "conformance/fixtures/broken-next",
     expectedCode: "SSP_NEXT_INVALID",
@@ -66,10 +76,73 @@ const invalidFixtures = [
     path: "conformance/fixtures/cyclic-chain",
     expectedCode: "SSP_CHAIN_CYCLE",
   },
+  {
+    path: "conformance/fixtures/frontmatter-next-mismatch",
+    expectedCode: "SSP_MANIFEST_MISMATCH",
+  },
+  {
+    path: "conformance/fixtures/entry-path-traversal",
+    expectedCode: "SSP_ENTRY_MISSING",
+  },
+  {
+    path: "conformance/fixtures/ssp-resource-access",
+    expectedCode: "SSP_RESOURCE_UNREADABLE",
+  },
+  {
+    path: "conformance/fixtures/duplicate-manifest-path",
+    expectedCode: "SSP_MANIFEST_MISMATCH",
+  },
+  {
+    path: "conformance/fixtures/invalid-required-extensions-type",
+    expectedCode: "SSP_MANIFEST_MISMATCH",
+  },
+  {
+    path: "conformance/fixtures/next-directory",
+    expectedCode: "SSP_NEXT_INVALID",
+  },
+  {
+    path: "conformance/fixtures/next-url",
+    expectedCode: "SSP_NEXT_INVALID",
+  },
+  {
+    path: "conformance/fixtures/next-query",
+    expectedCode: "SSP_NEXT_INVALID",
+  },
+  {
+    path: "conformance/fixtures/next-absolute-path",
+    expectedCode: "SSP_NEXT_INVALID",
+  },
+  {
+    path: "conformance/fixtures/next-backslash-path",
+    expectedCode: "SSP_NEXT_INVALID",
+  },
+  {
+    path: "conformance/fixtures/resource-url",
+    expectedCode: "SSP_RESOURCE_UNREADABLE",
+  },
+  {
+    path: "conformance/fixtures/resource-query",
+    expectedCode: "SSP_RESOURCE_UNREADABLE",
+  },
+  {
+    path: "conformance/fixtures/resource-absolute-path",
+    expectedCode: "SSP_RESOURCE_UNREADABLE",
+  },
+  {
+    path: "conformance/fixtures/frontmatter-resource-mismatch",
+    expectedCode: "SSP_MANIFEST_MISMATCH",
+  },
 ];
 
 function runValidator(fixtures) {
   return spawnSync(process.execPath, [validator, ...fixtures], {
+    cwd: repoRoot,
+    encoding: "utf8",
+  });
+}
+
+function runValidatorMode(mode, fixtures) {
+  return spawnSync(process.execPath, [validator, "--mode", mode, ...fixtures], {
     cwd: repoRoot,
     encoding: "utf8",
   });
@@ -80,16 +153,54 @@ function printOutput(result) {
   if (result.stderr) process.stderr.write(result.stderr);
 }
 
+function runCrlfFrontmatterCheck() {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ssp-crlf-"));
+  const tempFixture = path.join(tempRoot, "research-brief-crlf");
+  try {
+    fs.cpSync(path.join(repoRoot, "examples/research-brief"), tempFixture, { recursive: true });
+    for (const relativePath of ["SKILL.md", "steps/collect.md"]) {
+      const filePath = path.join(tempFixture, ...relativePath.split("/"));
+      const text = fs.readFileSync(filePath, "utf8");
+      fs.writeFileSync(filePath, text.replace(/\r?\n/g, "\r\n"), "utf8");
+    }
+    return runValidatorMode("publication", [tempFixture]);
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
 let failed = false;
 
-const validResult = runValidator(validFixtures);
+console.log("Source validation:");
+const sourceValidResult = runValidatorMode("source", [...validFixtures, ...sourceOnlyFixtures]);
+printOutput(sourceValidResult);
+
+if (sourceValidResult.status !== 0) {
+  failed = true;
+  console.error("Conformance failure: valid fixtures did not all pass source validation.");
+}
+
+console.log("Publication validation:");
+const validResult = runValidatorMode("publication", validFixtures);
 printOutput(validResult);
 
 if (validResult.status !== 0) {
   failed = true;
-  console.error("Conformance failure: valid fixtures did not all pass.");
+  console.error("Conformance failure: valid fixtures did not all pass publication validation.");
 }
 
+console.log("CRLF frontmatter validation:");
+const crlfResult = runCrlfFrontmatterCheck();
+
+if (crlfResult.status !== 0) {
+  failed = true;
+  printOutput(crlfResult);
+  console.error("Conformance failure: CRLF frontmatter fixture did not pass publication validation.");
+} else {
+  console.log("PASS research-brief-crlf");
+}
+
+console.log("Invalid fixture publication validation:");
 for (const fixture of invalidFixtures) {
   const result = runValidator([fixture.path]);
   printOutput(result);

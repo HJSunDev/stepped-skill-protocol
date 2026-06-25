@@ -8,6 +8,20 @@ Current reference prototype:
 tools/validate-ssp.mjs
 ```
 
+Source validation:
+
+```bash
+node tools/validate-ssp.mjs --mode source path/to/skill
+```
+
+Publication validation:
+
+```bash
+node tools/validate-ssp.mjs --mode publication path/to/skill
+```
+
+The default mode is `publication`, because public packages should be checked with generated control-plane artifacts.
+
 Current conformance runner:
 
 ```text
@@ -134,6 +148,7 @@ Terminal steps MAY define `Handoff` as `None`.
 - `Resources` MUST be exact skill-root relative file paths or `None`.
 - Resource paths MUST NOT point to directories.
 - Resource paths MUST NOT escape the skill root.
+- Resource paths MUST use `/` separators and MUST NOT contain backslashes, query fragments, hash fragments, absolute paths, drive letters, or URLs.
 - Resource paths MUST NOT point into `.ssp/`.
 - Every listed resource MUST exist.
 
@@ -142,6 +157,7 @@ Terminal steps MAY define `Handoff` as `None`.
 - `Next` MUST be a single relative step path or `END`.
 - Non-terminal `Next` MUST point to an existing file under `steps/`.
 - Terminal `Next` MUST be exactly `END`.
+- `Next` MUST use `/` separators and MUST NOT contain backslashes, query fragments, hash fragments, absolute paths, drive letters, or URLs.
 - `Next` MUST NOT be computed, conditional, multiple, network-based, or directory-based.
 - The chain MUST be finite and acyclic.
 - The chain MUST reach exactly one `END`.
