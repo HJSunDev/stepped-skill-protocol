@@ -6,7 +6,7 @@ Provide a step that cannot be reached because entry metadata is missing.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 
@@ -22,7 +22,7 @@ Validation catches the missing entry metadata.
 
 ## Handoff
 
-None.
+None
 
 ## Next
 

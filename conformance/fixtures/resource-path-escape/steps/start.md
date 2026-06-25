@@ -22,7 +22,7 @@ Validation catches the unsafe resource.
 
 ## Handoff
 
-None.
+None
 
 ## Next
 

@@ -6,7 +6,7 @@ Attempt an invalid network transition.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 

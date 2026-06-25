@@ -6,7 +6,7 @@ Loop back to the start step.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 

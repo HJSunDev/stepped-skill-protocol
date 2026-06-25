@@ -58,10 +58,11 @@ node tools/check-m1-readiness.mjs
 Expected preflight result:
 
 ```text
-source validation passes for both valid fixtures
-publication validation passes for both valid fixtures
+source validation passes for all valid fixtures
+publication validation passes for all valid publication fixtures
+generated manifest check passes for all valid publication fixtures
 CRLF frontmatter validation passes
-41 invalid publication fixtures fail with expected stable error codes
+44 invalid publication fixtures fail with expected stable error codes
 PASS SSP v0 conformance suite draft
 PASS SSP M1 readiness check
 ```
@@ -259,14 +260,15 @@ Current evidence completed:
 - two M0 sample packages exist;
 - ordinary baselines exist;
 - validation rules draft exists;
-- conformance suite draft exists with forty-one executable invalid publication fixtures;
+- conformance suite draft exists with three valid publication fixtures and forty-four executable invalid publication fixtures;
+- manifest generator prototype exists and is checked by the conformance runner;
 - M1 task set and runbook exist;
 - M1 eval harness exists;
 - M1 readiness checker exists and validates run package consistency before execution;
 - M1 eval summarizer exists;
 - generated M1 run package exists with 40 prompts, run order, reviewer guide, scorecard, blind-review map, and incomplete summary;
 - M1 summarizer rejects completed rows without non-empty output and trace evidence;
-- validator prototype passes valid samples and rejects `broken-next`.
+- validator prototype passes valid fixtures and rejects `broken-next`.
 
 Missing evidence:
 

@@ -398,8 +398,10 @@ Compatibility contract:
 - `name` MUST follow Agent Skills naming rules: 1-64 characters, lowercase letters, numbers, single hyphens, no leading/trailing hyphen, no consecutive hyphens, and it MUST match the package directory.
 - `description` MUST describe what the skill does and when to use it; it SHOULD NOT describe SSP mechanics as the primary value.
 - `description` MUST stay within the Agent Skills length limit.
+- `license`, when present, MUST remain an ordinary Agent Skills license name or bundled license file reference.
 - `compatibility`, when present, MUST stay within the Agent Skills length limit.
-- `name`, `description`, and `compatibility` values MUST be scalar strings, not arrays, nested objects, or unquoted YAML non-string scalars.
+- `allowed-tools`, when present, MUST remain an ordinary Agent Skills space-separated tool allowlist string.
+- `name`, `description`, `license`, `compatibility`, and `allowed-tools` values MUST be scalar strings, not arrays, nested objects, or unquoted YAML non-string scalars.
 - `metadata` MUST remain a string-to-string map.
 - `metadata` values MUST be scalar strings, not arrays, nested objects, or inline collections.
 - `metadata` values that YAML would parse as numbers, booleans, or null MUST be quoted.
@@ -600,7 +602,7 @@ Produce the final answer for the user.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 
@@ -618,7 +620,7 @@ The final answer is ready to send to the user.
 
 ## Handoff
 
-None. This is the terminal step.
+None
 
 ## Next
 
@@ -937,6 +939,18 @@ Validator checks:
 
 Validation is part of product quality. A protocol that cannot be checked will not spread professionally.
 
+Manifest generation is part of the validation story:
+
+- `tools/generate-manifest.mjs` projects `.ssp/manifest.json` from `SKILL.md` metadata and step `Resources` / `Next`.
+- `tools/generate-manifest.mjs --check` verifies that a publication manifest still matches author source.
+- Authors should regenerate manifest after source edits instead of hand-maintaining control-plane JSON.
+
+Parser requirement:
+
+- Public validators MUST use a real YAML parser for `SKILL.md` frontmatter.
+- The current `tools/validate-ssp.mjs` script is an M0 reference prototype for protocol invariants, not the final parser contract.
+- Parser errors, non-string scalar fields, and invalid metadata shapes MUST be reported as base Agent Skills compatibility failures before SSP-specific validation proceeds.
+
 The validator should distinguish source validation from publication validation:
 
 - **source validation** checks what the author wrote: `SKILL.md`, step sections, resources, `Next`, fallback;
@@ -1046,6 +1060,7 @@ Current draft artifacts:
 - M1 generated run package: `eval-runs/m1-draft/`;
 - sample fixtures: `examples/`;
 - reference validator prototype: `tools/validate-ssp.mjs`;
+- manifest generator prototype: `tools/generate-manifest.mjs`;
 - conformance runner: `tools/run-conformance.mjs`;
 - executable invalid fixtures: `conformance/fixtures/`.
 
@@ -1317,6 +1332,7 @@ Stop or redesign if:
 - Current validation rules draft: `docs/validation-rules.md`.
 - Current conformance suite draft: `docs/conformance-suite.md`.
 - Current validator prototype: `tools/validate-ssp.mjs`.
+- Current manifest generator prototype: `tools/generate-manifest.mjs`.
 - Current conformance runner: `tools/run-conformance.mjs`.
 - Current authoring guide draft: `docs/authoring-guide.md`.
 

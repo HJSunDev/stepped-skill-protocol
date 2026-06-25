@@ -8,6 +8,12 @@ Current reference prototype:
 tools/validate-ssp.mjs
 ```
 
+Current manifest generator prototype:
+
+```text
+tools/generate-manifest.mjs
+```
+
 Source validation:
 
 ```bash
@@ -20,6 +26,13 @@ Publication validation:
 node tools/validate-ssp.mjs --mode publication path/to/skill
 ```
 
+Manifest generation:
+
+```bash
+node tools/generate-manifest.mjs path/to/skill
+node tools/generate-manifest.mjs --check path/to/skill
+```
+
 The default mode is `publication`, because public packages should be checked with generated control-plane artifacts.
 
 Current conformance runner:
@@ -29,6 +42,20 @@ tools/run-conformance.mjs
 ```
 
 The prototype is intentionally small. It exists to prove the validation model against M0 samples, not to serve as the final production validator.
+
+## 0. Parser Expectations
+
+Agent Skills use YAML frontmatter. A production SSP validator MUST parse frontmatter with a YAML parser that preserves YAML scalar semantics and reports syntax errors clearly.
+
+The current `tools/validate-ssp.mjs` script is an M0 reference prototype. It intentionally supports the simple scalar frontmatter subset used by the current fixtures, so the conformance suite can exercise SSP invariants without adding package dependencies. It MUST NOT be treated as the final YAML parser behavior for public implementations.
+
+Implementation guidance:
+
+- parse `SKILL.md` frontmatter as YAML, then validate Agent Skills field shapes;
+- keep `metadata` as a string-to-string map for SSP keys;
+- reject arrays, nested objects, and non-string scalars for fields that the Agent Skills spec defines as scalar strings;
+- report parser errors as `SSP_AGENT_SKILL_INVALID`;
+- do not infer SSP metadata from Markdown body text when frontmatter is invalid.
 
 ## 1. Validation Modes
 
@@ -52,6 +79,7 @@ Publication validation checks release-ready package artifacts:
 
 - all source validation requirements;
 - `.ssp/manifest.json`;
+- generated manifest equivalence with source projection;
 - generated step frontmatter when present;
 - deterministic chain projection;
 - conformance metadata.
@@ -116,8 +144,10 @@ Fields:
 - `name` MUST match the package directory name.
 - `description` MUST exist.
 - `description` MUST be 1-1024 characters.
+- `license`, when present, MUST be a non-empty scalar string naming a license or bundled license file.
 - `compatibility`, when present, MUST be 1-500 characters.
-- `name`, `description`, and `compatibility` values MUST be scalar strings, not arrays, nested objects, or unquoted YAML non-string scalars.
+- `allowed-tools`, when present, MUST be a non-empty space-separated scalar string.
+- `name`, `description`, `license`, `compatibility`, and `allowed-tools` values MUST be scalar strings, not arrays, nested objects, or unquoted YAML non-string scalars.
 - `metadata` MUST be a string-to-string map when present.
 - Metadata values MUST be scalar strings, not arrays, nested objects, or inline collections.
 - Metadata values that YAML would parse as numbers, booleans, or null MUST be quoted.

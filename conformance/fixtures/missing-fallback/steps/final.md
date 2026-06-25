@@ -6,7 +6,7 @@ Finish the invalid fixture chain.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 
@@ -22,7 +22,7 @@ The final note is complete.
 
 ## Handoff
 
-None.
+None
 
 ## Next
 

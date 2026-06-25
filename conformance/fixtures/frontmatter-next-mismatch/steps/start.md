@@ -14,7 +14,7 @@ Complete the fixture step.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 
@@ -30,7 +30,7 @@ The fixture output exists.
 
 ## Handoff
 
-None. This is the terminal step.
+None
 
 ## Next
 

@@ -79,6 +79,8 @@ Do not make authors hand-maintain control-plane files.
 
 The `name` field must follow Agent Skills naming rules and match the package directory. The `description` should describe what the Skill does and when to use it; do not spend the primary description budget on SSP mechanics.
 
+Optional Agent Skills fields such as `license`, `compatibility`, `metadata`, and `allowed-tools` remain ordinary Agent Skills fields. SSP adds namespaced `stepped-skill.*` keys inside `metadata`; it does not replace or reinterpret the base Skill format.
+
 Minimum shape:
 
 ```markdown
@@ -94,7 +96,7 @@ metadata:
 
 Use this skill to produce a staged result.
 
-## Ordinary Fallback
+## Fallback Workflow
 
 If step files are unavailable, complete the work linearly:
 
@@ -102,7 +104,7 @@ If step files are unavailable, complete the work linearly:
 2. Synthesize the important findings.
 3. Produce the final answer.
 
-## Stepped Execution
+## Stepped Skill Protocol
 
 This skill uses Stepped Skill Protocol v0.1.
 
@@ -111,7 +113,7 @@ Start with `steps/collect.md`.
 Loop:
 
 1. Complete the current step.
-2. Produce the required handoff.
+2. Record an `SSP Handoff` block when the step is non-terminal.
 3. Read the path named by `Next`.
 4. Stop when `Next` is `END`.
 ```
@@ -162,10 +164,9 @@ Recommended template:
 
 State what this step is responsible for.
 
-## Inputs
+## Resources
 
-- User request
-- Relevant files or resources
+None
 
 ## Instructions
 
@@ -176,6 +177,10 @@ State what this step is responsible for.
 ## Output
 
 Describe the artifact this step must produce.
+
+## Completion Criteria
+
+State when this step is complete enough for the next step to continue.
 
 ## Handoff
 
@@ -202,8 +207,10 @@ END
 Rules:
 
 - Every non-terminal step must have `Handoff`.
+- Every step must have `Resources` and `Completion Criteria`.
 - Every step must have `Next`.
-- `Next` must be a single local step path or `END`.
+- `Resources` is either `None` or a Markdown bullet list of exact skill-root relative paths.
+- `Next` must be a single local step path or `END`, with no explanatory prose in the `Next` section.
 - `Handoff` is not hidden chain-of-thought; write only useful execution state.
 - The final answer should not dump internal handoff unless the user asks for trace.
 
@@ -299,13 +306,19 @@ Before running the validator, check:
 
 ## 11. Validation
 
+Generate or refresh the publication manifest:
+
+```bash
+node tools/generate-manifest.mjs path/to/my-stepped-skill
+```
+
 Run the reference validator:
 
 ```bash
 node tools/validate-ssp.mjs path/to/my-stepped-skill
 ```
 
-A package is not publication-ready until validation passes.
+A package is not publication-ready until the generated manifest is current and validation passes.
 
 Validation can catch structural mistakes:
 
@@ -376,6 +389,7 @@ Before public release, a Stepped Skill should include:
 - valid ordinary `SKILL.md` fallback;
 - source step files;
 - generated `.ssp/manifest.json`;
+- manifest generated from the current source, not maintained by hand;
 - validator pass;
 - expected chain;
 - expected handoff sequence;

@@ -22,7 +22,7 @@ The fixture output exists.
 
 ## Handoff
 
-None. This is the terminal step.
+None
 
 ## Next
 

@@ -6,7 +6,7 @@ Produce the final user-facing review report.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 
@@ -27,7 +27,7 @@ The final answer is ready to send to the user.
 
 ## Handoff
 
-None. This is the terminal step.
+None
 
 ## Next
 

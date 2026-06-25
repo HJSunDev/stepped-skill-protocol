@@ -6,7 +6,7 @@ Provide a valid single-step chain while extension declarations disagree.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 
@@ -22,7 +22,7 @@ Validation catches the required extension mismatch.
 
 ## Handoff
 
-None.
+None
 
 ## Next
 

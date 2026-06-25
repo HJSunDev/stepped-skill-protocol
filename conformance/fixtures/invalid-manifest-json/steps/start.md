@@ -6,7 +6,7 @@ Provide a valid step while the manifest is malformed.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 
@@ -22,7 +22,7 @@ Validation catches malformed manifest JSON.
 
 ## Handoff
 
-None.
+None
 
 ## Next
 

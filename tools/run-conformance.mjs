@@ -9,10 +9,12 @@ import { fileURLToPath } from "node:url";
 const toolDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(toolDir, "..");
 const validator = path.join(toolDir, "validate-ssp.mjs");
+const manifestGenerator = path.join(toolDir, "generate-manifest.mjs");
 
 const validFixtures = [
   "examples/research-brief",
   "examples/multi-phase-review",
+  "conformance/fixtures/agent-skill-optional-fields",
 ];
 
 const sourceOnlyFixtures = [
@@ -61,6 +63,14 @@ const invalidFixtures = [
     expectedCode: "SSP_AGENT_SKILL_INVALID",
   },
   {
+    path: "conformance/fixtures/invalid-license-scalar",
+    expectedCode: "SSP_AGENT_SKILL_INVALID",
+  },
+  {
+    path: "conformance/fixtures/invalid-allowed-tools-shape",
+    expectedCode: "SSP_AGENT_SKILL_INVALID",
+  },
+  {
     path: "conformance/fixtures/invalid-metadata-shape",
     expectedCode: "SSP_AGENT_SKILL_INVALID",
   },
@@ -98,6 +108,10 @@ const invalidFixtures = [
   },
   {
     path: "conformance/fixtures/malformed-resources-section",
+    expectedCode: "SSP_RESOURCE_UNREADABLE",
+  },
+  {
+    path: "conformance/fixtures/resources-none-with-period",
     expectedCode: "SSP_RESOURCE_UNREADABLE",
   },
   {
@@ -200,6 +214,13 @@ function runValidatorMode(mode, fixtures) {
   });
 }
 
+function runManifestGeneratorCheck(fixtures) {
+  return spawnSync(process.execPath, [manifestGenerator, "--check", ...fixtures], {
+    cwd: repoRoot,
+    encoding: "utf8",
+  });
+}
+
 function printOutput(result) {
   if (result.stdout) process.stdout.write(result.stdout);
   if (result.stderr) process.stderr.write(result.stderr);
@@ -250,6 +271,15 @@ printOutput(validResult);
 if (validResult.status !== 0) {
   failed = true;
   console.error("Conformance failure: valid fixtures did not all pass publication validation.");
+}
+
+console.log("Generated manifest check:");
+const generatedManifestResult = runManifestGeneratorCheck(validFixtures);
+printOutput(generatedManifestResult);
+
+if (generatedManifestResult.status !== 0) {
+  failed = true;
+  console.error("Conformance failure: generated manifests do not match valid publication fixtures.");
 }
 
 console.log("CRLF frontmatter validation:");

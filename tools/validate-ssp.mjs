@@ -97,7 +97,7 @@ function parseFrontmatter(text) {
       if (!inMetadata) {
         const rawValue = top[2].trim();
         fields[top[1]] = stripQuotes(rawValue);
-        if (["name", "description", "compatibility"].includes(top[1])) {
+        if (["name", "description", "license", "compatibility", "allowed-tools"].includes(top[1])) {
           if (rawValue.startsWith("[") || rawValue.startsWith("{")) {
             fieldIssues.push({
               section: top[1],
@@ -263,7 +263,7 @@ function parseNext(markdown) {
 function parseResources(markdown) {
   const body = sectionBody(markdown, "Resources");
   if (!body) return null;
-  if (/^None\.?$/i.test(body.trim())) return { resources: [], malformedLines: [] };
+  if (body.trim() === "None") return { resources: [], malformedLines: [] };
   const resources = [];
   const malformedLines = [];
   for (const line of body.split(/\r?\n/)) {
@@ -337,10 +337,16 @@ function validatePackage(rootInput, options = {}) {
   } else if (skillDescription.length > 1024) {
     issues.push(issue("SSP_AGENT_SKILL_INVALID", "SKILL.md", "description", "1-1024 characters", `${skillDescription.length} characters`, "Skill description exceeds the Agent Skills length limit.", "Shorten description while keeping what the skill does and when to use it."));
   }
+  if (Object.hasOwn(skill.fields, "license") && skill.fields.license.length === 0) {
+    issues.push(issue("SSP_AGENT_SKILL_INVALID", "SKILL.md", "license", "non-empty license name or bundled license file reference", "empty", "Skill license is present but empty.", "Remove license or provide a short license name or file reference."));
+  }
   if (Object.hasOwn(skill.fields, "compatibility") && skill.fields.compatibility.length === 0) {
     issues.push(issue("SSP_AGENT_SKILL_INVALID", "SKILL.md", "compatibility", "1-500 characters", "empty", "Skill compatibility is present but empty.", "Remove compatibility or provide a short compatibility statement."));
   } else if (skill.fields.compatibility && skill.fields.compatibility.length > 500) {
     issues.push(issue("SSP_AGENT_SKILL_INVALID", "SKILL.md", "compatibility", "1-500 characters", `${skill.fields.compatibility.length} characters`, "Skill compatibility exceeds the Agent Skills length limit.", "Shorten compatibility or move detail into the body."));
+  }
+  if (Object.hasOwn(skill.fields, "allowed-tools") && skill.fields["allowed-tools"].length === 0) {
+    issues.push(issue("SSP_AGENT_SKILL_INVALID", "SKILL.md", "allowed-tools", "non-empty space-separated string", "empty", "Skill allowed-tools is present but empty.", "Remove allowed-tools or provide a space-separated tool list."));
   }
   const skillVersion = skill.metadata["stepped-skill.version"];
   if (!skillVersion) {
@@ -525,7 +531,7 @@ function validatePackage(rootInput, options = {}) {
 
     if (next !== "END") {
       const handoff = sectionBody(body, "Handoff");
-      if (!handoff || /^None\.?$/i.test(handoff.trim())) {
+      if (!handoff || handoff.trim() === "None") {
         issues.push(issue("SSP_HANDOFF_MISSING", current, "Handoff", "carry-forward state", handoff ?? "missing", "Non-terminal step lacks handoff.", "Define carry-forward state."));
       }
     }

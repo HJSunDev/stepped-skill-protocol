@@ -6,7 +6,7 @@ Start the invalid fixture chain.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 

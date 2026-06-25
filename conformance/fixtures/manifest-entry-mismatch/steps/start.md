@@ -6,7 +6,7 @@ Provide a valid single-step chain.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 
@@ -22,7 +22,7 @@ Validation catches the manifest entry mismatch.
 
 ## Handoff
 
-None.
+None
 
 ## Next
 

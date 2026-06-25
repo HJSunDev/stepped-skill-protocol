@@ -6,7 +6,7 @@ Declare an unsupported major version.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 
@@ -22,7 +22,7 @@ Validation catches the unsupported major version.
 
 ## Handoff
 
-None.
+None
 
 ## Next
 

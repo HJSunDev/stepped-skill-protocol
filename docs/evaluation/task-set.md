@@ -53,10 +53,11 @@ node tools/check-m1-readiness.mjs
 Expected preflight result:
 
 ```text
-source validation passes for both valid fixtures
-publication validation passes for both valid fixtures
+source validation passes for all valid fixtures
+publication validation passes for all valid publication fixtures
+generated manifest check passes for all valid publication fixtures
 CRLF frontmatter validation passes
-41 invalid publication fixtures fail with expected stable error codes
+44 invalid publication fixtures fail with expected stable error codes
 PASS SSP v0 conformance suite draft
 PASS SSP M1 readiness check
 ```

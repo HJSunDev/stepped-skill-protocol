@@ -22,7 +22,7 @@ Validation catches the directory resource.
 
 ## Handoff
 
-None.
+None
 
 ## Next
 

@@ -6,7 +6,7 @@ Start the invalid fixture chain.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 
@@ -22,7 +22,7 @@ The next step can finish only if state is carried forward.
 
 ## Handoff
 
-None.
+None
 
 ## Next
 

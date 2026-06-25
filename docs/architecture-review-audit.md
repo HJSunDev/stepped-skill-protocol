@@ -45,16 +45,16 @@ SSP should pass only if these are true in current artifacts, not merely intended
 | Requirement | Current Evidence | Verdict | Notes |
 | --- | --- | --- | --- |
 | Product essence is clear | `docs/architecture.md` defines SSP as turning manual staged prompting into reusable Skill packages. | Pass | The center is strong: productizing work users already hand-feed across turns. |
-| Skill compatibility is preserved | `SKILL.md` remains the entry point; samples include ordinary fallbacks and ordinary baselines. | Pass | The protocol stays close enough to Agent Skills to avoid looking like an unrelated format. |
+| Skill compatibility is preserved | `SKILL.md` remains the entry point; samples include ordinary fallbacks, ordinary baselines, and a positive optional-field compatibility fixture. | Pass | The protocol stays close enough to Agent Skills to avoid looking like an unrelated format. |
 | v0 scope is disciplined | v0 is single-entry, finite, linear, local-file based; branching and runtime orchestration are out of scope. | Pass | This is the right scope cut. Branching in v0 would create architecture debt. |
 | Core mechanism is physical distribution | Main draft and security notes distinguish distributed files from prompt-only instruction. | Pass | The design does move future step detail out of initial context. |
 | Isolation claims are honest | Security notes say only L2 can enforce scoped access; L0/L1 are not security boundaries. | Pass | This corrects the biggest external-review risk. |
 | Focus comes from sufficiency, not prohibition | Main draft and authoring guide require each step to be sufficient. | Pass | This aligns with the "models get smarter" belief: the model has no reason to inspect irrelevant future steps. |
-| Authoring is easy | Authoring guide reduces the model to ordinary `SKILL.md`, step bodies, resources, and validator. | Conditional pass | The design is easy on paper; real authoring time still needs M1 measurement. |
+| Authoring is easy | Authoring guide reduces the model to ordinary `SKILL.md`, step bodies, resources, manifest generator, and validator. | Conditional pass | The design is easier now that manifest generation has an executable path; real authoring time still needs M1 measurement. |
 | L0 fallback is not an empty shell | Sample packages include ordinary fallback and ordinary baseline files. | Pass for M0 | More sample diversity is needed before public release. |
 | L1 execution is portable | L1 uses local file reads and explicit `Next`; samples and validator support the chain. | Conditional pass | Needs real L1 execution traces from M1. |
 | L2 has a clean growth path | Security notes define scoped access, structured handoff, traces, and policy checks. | Pass | L2 enhances the same protocol instead of replacing it. |
-| Validation is deterministic | Validation rules, validator prototype, source/publication modes, and conformance runner exist. | Pass for M0 | The suite now covers source-only validation plus forty-one invalid publication fixtures across base Agent Skills compatibility, entry, fallback, manifest, resource, handoff, chain, version, extension, generated frontmatter, and path-shape failures. |
+| Validation is deterministic | Validation rules, validator prototype, manifest generator prototype, source/publication modes, and conformance runner exist. | Pass for M0 | The suite now covers generated manifest checks, three valid publication fixtures, source-only validation, and forty-four invalid publication fixtures across base Agent Skills compatibility, entry, fallback, manifest, resource, handoff, chain, version, extension, generated frontmatter, and path-shape failures. |
 | Failure is honest | Invalid fixtures reject base Agent Skills incompatibility, broken `Next`, missing entry, missing fallback, invalid manifest JSON, manifest mismatch, unsafe resources, missing handoff, unreachable step, unsupported version, unsupported extension, cycle, generated frontmatter mismatch, duplicate manifest paths, invalid extension field types, entry traversal, and directory-like `Next`. | Pass for M0 | More edge-case fixtures are still useful before public release, but the core failure model is now materially exercised. |
 | Trust boundary is named | Security notes distinguish trusted package content from untrusted task/external data. | Pass | Public wording is appropriately conservative. |
 | Public release is gated | Main draft lists spec, authoring guide, examples, validator, conformance suite, eval report, security notes, governance/contribution rules, license, and changelog. | Conditional pass | Some artifacts exist only as drafts; formal spec, governance files, license, and changelog are intentionally not finalized before M1. |
@@ -143,6 +143,22 @@ Current status:
 
 > Controlled in current evaluation framing.
 
+### 4.6 Prototype Parser Confusion
+
+Risk:
+
+The M0 validator prototype may be mistaken for final production parser behavior, even though Agent Skills frontmatter is YAML and public validators need full YAML parsing semantics.
+
+Guardrail:
+
+- validation rules explicitly require production validators to use a YAML parser;
+- README labels the current validator as a reference prototype;
+- conformance covers the current scalar frontmatter subset while leaving final parser behavior to the formal spec.
+
+Current status:
+
+> Controlled in docs; final spec and production validator must keep this boundary.
+
 ## 5. Forbidden Public Claims
 
 Until M1 passes, do not claim:
@@ -167,7 +183,8 @@ Allowed current claim:
 | Security notes | Exists | Draft-ready |
 | Validation rules | Exists | Draft-ready |
 | Validator prototype | Exists | M0 prototype |
-| Conformance suite | Exists with source-only validation plus forty-one executable invalid publication fixtures | M0/M1 draft |
+| Manifest generator prototype | Exists | M0 prototype |
+| Conformance suite | Exists with three valid publication fixtures, source-only validation, plus forty-four executable invalid publication fixtures | M0/M1 draft |
 | Sample packages | Two exist | M0 sample quality |
 | Evaluation task set | Exists | Ready to run |
 | Evaluation harness | Exists with generated 40-run package and readiness checker | Ready to execute after readiness check |

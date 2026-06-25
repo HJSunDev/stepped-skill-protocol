@@ -6,7 +6,7 @@ Attempt an invalid backslash transition.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 

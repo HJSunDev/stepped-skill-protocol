@@ -6,7 +6,7 @@ Produce the final answer for the user.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 
@@ -26,7 +26,7 @@ The final answer is ready to send to the user.
 
 ## Handoff
 
-None. This is the terminal step.
+None
 
 ## Next
 

@@ -6,7 +6,7 @@ Attempt an invalid absolute transition.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 

@@ -6,7 +6,7 @@ Start a cyclic chain.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 

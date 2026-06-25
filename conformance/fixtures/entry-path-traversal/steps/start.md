@@ -6,7 +6,7 @@ This step should not be reachable from the unsafe entry.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 
@@ -22,7 +22,7 @@ No execution occurs.
 
 ## Handoff
 
-None. This is the terminal step.
+None
 
 ## Next
 

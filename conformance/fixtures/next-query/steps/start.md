@@ -6,7 +6,7 @@ Attempt an invalid query-bearing transition.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 

@@ -6,7 +6,7 @@ Turn the collected material into a structured set of findings. This step's deliv
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 

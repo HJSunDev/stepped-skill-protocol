@@ -6,7 +6,7 @@ Remain unreachable from the entry chain.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 
@@ -22,7 +22,7 @@ Validation catches this unreachable step.
 
 ## Handoff
 
-None.
+None
 
 ## Next
 

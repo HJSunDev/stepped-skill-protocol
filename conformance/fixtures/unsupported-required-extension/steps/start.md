@@ -6,7 +6,7 @@ Declare a required extension that this validator does not support.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 
@@ -22,7 +22,7 @@ Validation catches the unsupported required extension.
 
 ## Handoff
 
-None.
+None
 
 ## Next
 

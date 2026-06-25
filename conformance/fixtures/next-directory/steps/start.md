@@ -6,7 +6,7 @@ Attempt an invalid directory-like transition.
 
 ## Resources
 
-None.
+None
 
 ## Instructions
 
