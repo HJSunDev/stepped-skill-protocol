@@ -14,7 +14,7 @@ Architecture coherence:
 
 > Conditional pass.
 
-SSP now has a coherent product center, disciplined v0 scope, compatible Skill packaging, authoring guidance, security boundary language, validation rules, sample packages, conformance fixtures, and an M1 eval plan.
+SSP now has a coherent product center, disciplined v0 scope, compatible Skill packaging, authoring guidance, ordinary Agent Skills for agent-assisted SSP authoring, security boundary language, validation rules, sample packages, conformance fixtures, and an M1 eval plan.
 
 Public protocol readiness:
 
@@ -50,7 +50,7 @@ SSP should pass only if these are true in current artifacts, not merely intended
 | Core mechanism is physical distribution | Main draft and security notes distinguish distributed files from prompt-only instruction. | Pass | The design does move future step detail out of initial context. |
 | Isolation claims are honest | Security notes say only L2 can enforce scoped access; L0/L1 are not security boundaries. | Pass | This corrects the biggest external-review risk. |
 | Focus comes from sufficiency, not prohibition | Main draft and authoring guide require each step to be sufficient. | Pass | This aligns with the "models get smarter" belief: the model has no reason to inspect irrelevant future steps. |
-| Authoring is easy | Authoring guide reduces the model to ordinary `SKILL.md`, step bodies, resources, manifest generator, and validator. | Conditional pass | The design is easier now that manifest generation has an executable path; real authoring time still needs M1 measurement. |
+| Authoring is easy | Authoring guide, `skills/stepped-skill-author/`, and `skills/stepped-skill-author-en/` reduce the model to ordinary `SKILL.md`, step bodies, resources, manifest projection, and validation checks. | Conditional pass | The design is easier now that manifest generation has an executable path and bilingual portable agent-assisted authoring surfaces; real authoring time still needs M1 measurement. |
 | L0 fallback is not an empty shell | Sample packages include ordinary fallback and ordinary baseline files. | Pass for M0 | More sample diversity is needed before public release. |
 | L1 execution is portable | L1 uses local file reads and explicit `Next`; samples and validator support the chain. | Conditional pass | Needs real L1 execution traces from M1. |
 | L2 has a clean growth path | Security notes define scoped access, structured handoff, traces, and policy checks. | Pass | L2 enhances the same protocol instead of replacing it. |
@@ -172,7 +172,7 @@ Until M1 passes, do not claim:
 
 Allowed current claim:
 
-> SSP is a coherent architecture draft for Skill-compatible static distributed step reading, with samples, validation rules, conformance fixtures, authoring guidance, security notes, and a planned M1 evaluation.
+> SSP is a coherent architecture draft for Skill-compatible static distributed step reading, with samples, validation rules, conformance fixtures, authoring guidance, agent authoring Skills, security notes, and a planned M1 evaluation.
 
 ## 6. Public Release Readiness Snapshot
 
@@ -180,6 +180,7 @@ Allowed current claim:
 | --- | --- | --- |
 | Architecture draft | Exists | Draft-ready |
 | Authoring guide | Exists | Draft-ready |
+| Agent authoring Skills | Exist as ordinary Agent Skills at `skills/stepped-skill-author/` and `skills/stepped-skill-author-en/` | Draft-ready |
 | Security notes | Exists | Draft-ready |
 | Validation rules | Exists | Draft-ready |
 | Validator prototype | Exists | M0 prototype |

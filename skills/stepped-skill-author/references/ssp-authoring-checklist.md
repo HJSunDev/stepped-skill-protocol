@@ -1,0 +1,137 @@
+# SSP 编写检查表
+
+创建或审查 Stepped Skill Protocol 包时使用本检查表。它是可移植的，不假设当前环境存在 SSP 协议仓库工具。
+
+## 1. 适用性判断
+
+以下条件全部成立时，适合使用 SSP：
+
+- 工作天然分为多个阶段。
+- 阶段顺序稳定。
+- 每个阶段都能产出明确交付物。
+- 每个阶段不需要读取未来阶段指令也能完成。
+- 用户原本会把这些阶段分多轮交给 agent。
+
+以下任一条件成立时，应使用普通 Skill：
+
+- 任务短到可以舒适地放进一个 Skill body。
+- 任务本质是一条强耦合推理链。
+- 后续指令是理解当前阶段的必要条件。
+- 拆分只是形式上的段落切分。
+- v0 需要分支、循环、动态路由或并行执行。
+- 用户需要硬保密或安全隔离。
+
+## 2. 包结构
+
+推荐 source layout：
+
+```text
+my-stepped-skill/
+  SKILL.md
+  steps/
+    01-first-phase.md
+    02-second-phase.md
+    03-final-phase.md
+  references/
+    optional-supporting-material.md
+  .ssp/
+    manifest.json
+```
+
+包目录名必须和 `SKILL.md` 的 `name` 字段一致。
+
+## 3. `SKILL.md` 要求
+
+`SKILL.md` 必须首先是合法普通 Agent Skill：
+
+- 使用 YAML frontmatter。
+- 包含 `name` 和 `description`。
+- `name` 使用小写字母、数字和连字符，并与目录名一致。
+- `description` 描述用户问题，不要把主要触发文本浪费在协议机制上。
+- 需要时保留普通 Agent Skills 字段，例如 `license`、`compatibility`、`metadata`、`allowed-tools`。
+
+SSP 只在 `metadata` 中增加命名空间字段：
+
+```yaml
+metadata:
+  stepped-skill.version: "0.1"
+  stepped-skill.entry: "steps/01-first-phase.md"
+```
+
+`SKILL.md` 还必须包含：
+
+- 可用的普通 fallback workflow；
+- 简短的 SSP protocol capsule；
+- entry step 路径；
+- 不要完整复制所有高保真 step 指令。
+
+fallback 不是装饰。即使 agent 只看到 `SKILL.md`，也应该能完成一个低保真版本。
+
+## 4. Step 文件要求
+
+每个 step 文件应包含以下章节：
+
+```markdown
+# Step Title
+
+## Objective
+
+## Resources
+
+## Instructions
+
+## Output
+
+## Completion Criteria
+
+## Handoff
+
+## Next
+```
+
+章节规则：
+
+- `Objective` 只描述当前阶段。
+- `Resources` 必须是精确的 `None`，或本地 skill-root 相对路径 bullet list。
+- `Instructions` 提供足以完成当前阶段的说明，不依赖未来 step。
+- `Output` 命名当前 step 的具体交付物。
+- `Completion Criteria` 明确什么时候当前 step 算完成。
+- `Handoff` 说明下一步所需的最小状态。
+- `Next` 只能是一个本地 step 路径或 `END`。
+
+SSP v0 中，每个非终止 step 只能有一个 `Next`，整条链必须终止于 `END`。
+
+## 5. Manifest 要求
+
+Publication package 应包含 `.ssp/manifest.json`。
+
+作者不应该把 manifest 当成独立 source 手动维护。它应从 `SKILL.md` metadata、每个 step 的 `Resources` 和 `Next` 推导出来。
+
+有 SSP generator 时使用 generator；没有 generator 时，按 `ssp-portable-spec.md` 手动创建或检查 manifest。
+
+## 6. 验证清单
+
+发布前检查：
+
+- `SKILL.md` 作为普通 Skill 可用。
+- SSP entry 存在。
+- 每个 `Next` 都能解析，或为 `END`。
+- 没有环。
+- 没有不可达 step。
+- resource 路径是本地、相对、包内路径。
+- step resource 是精确文件路径，不是目录、URL、绝对路径或路径穿越。
+- handoff 期望清晰。
+- 包不声称 L0/L1 具备硬隔离。
+- 如果存在 manifest，它必须与 source 文件一致。
+
+## 7. 反模式
+
+避免：
+
+- 空壳 `SKILL.md`，只让 agent 去读 steps。
+- 把一个推理任务任意切碎。
+- 在当前 step 大段预告未来 step。
+- 用大量禁令替代良好结构。
+- 在 L0/L1 中暗示“模型不能看到未来 step”。
+- 手写会漂移的 manifest。
+- step 名称或正文必须读未来 step 才能理解当前 step。

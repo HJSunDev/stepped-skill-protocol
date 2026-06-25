@@ -6,6 +6,8 @@ This guide is for Skill authors. It explains how to write a Stepped Skill withou
 
 SSP authoring should feel like writing a normal Skill, then moving high-fidelity phase instructions into step files.
 
+For agent-assisted authoring, this repository includes portable normal Agent Skills at `skills/stepped-skill-author/` for Simplified Chinese and `skills/stepped-skill-author-en/` for English. They are not themselves SSP packages; they can be copied into another agent environment and teach an agent how to decide whether SSP fits, design step boundaries, write the L0 fallback, draft step files, derive the manifest, and validate the result without assuming this repository is present.
+
 ## 1. The Authoring Contract
 
 A good Stepped Skill has three promises:

@@ -1037,6 +1037,7 @@ Minimum public release package:
 
 - `specification.md`：normative SSP spec, separate from architecture rationale;
 - `authoring-guide.md`：how to write a Stepped Skill without understanding control-plane details;
+- `skills/stepped-skill-author/` and `skills/stepped-skill-author-en/`：ordinary Agent Skills that help agents author or review SSP packages;
 - `examples/`：at least two realistic Stepped Skills, one simple and one complex;
 - `validator`：reference validator or validation rules precise enough to implement independently;
 - `conformance-suite/`：valid and invalid fixtures with expected outputs;
@@ -1049,6 +1050,7 @@ Minimum public release package:
 Current draft artifacts:
 
 - authoring guide draft: `docs/authoring-guide.md`;
+- agent authoring skill drafts: `skills/stepped-skill-author/`, `skills/stepped-skill-author-en/`;
 - security notes draft: `docs/security-notes.md`;
 - architecture review audit: `docs/architecture-review-audit.md`;
 - validation rules draft: `docs/validation-rules.md`;
@@ -1335,10 +1337,12 @@ Stop or redesign if:
 - Current manifest generator prototype: `tools/generate-manifest.mjs`.
 - Current conformance runner: `tools/run-conformance.mjs`.
 - Current authoring guide draft: `docs/authoring-guide.md`.
+- Current agent authoring skill drafts: `skills/stepped-skill-author/`, `skills/stepped-skill-author-en/`.
 
 ### M4：Public Release Candidate
 
 - Authoring guide.
+- Agent authoring Skill.
 - Security notes.
 - At least two realistic example packages.
 - Evaluation report.
