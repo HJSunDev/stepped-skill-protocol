@@ -1,0 +1,39 @@
+# SSP M1 Eval Prompt
+
+Run ID: MR-10-S
+Blind ID: B040
+Task ID: MR-10
+Variant: SSP
+Sample: multi-phase-review
+
+## Task
+
+Review whether SSP's current v0 scope is narrow enough to avoid architecture debt.
+
+## Expected Output
+
+Findings on scope, cut lines, and future-proofing.
+
+## Input Artifacts
+
+- `docs/architecture.md`
+- `docs/architecture-review-audit.md`
+
+## Variant Instructions
+
+- Use Stepped Skill package root: `examples/multi-phase-review`.
+- Read `SKILL.md` first, then follow the declared SSP entry and each `Next` target exactly.
+- Do not list package directories or inspect future steps unless the current step's `Next` points there.
+- Record handoff state as execution state. Do not expose private reasoning in the final answer.
+
+## Evaluation Controls
+
+- Use the same model, tool access, local repository state, and time budget as the paired variant for this task.
+- Do not ask for user repair unless a required input is genuinely unavailable.
+- Do not mention the variant name in the final user-facing output.
+- Save the final user-facing output to `outputs/B040.md`.
+- Save any execution notes, including observed reads and failures, to `traces/MR-10-S.md`.
+
+## Final Output Requirement
+
+Produce the requested deliverable only. Keep process notes out of the final output unless the task explicitly asks for review findings or rationale.

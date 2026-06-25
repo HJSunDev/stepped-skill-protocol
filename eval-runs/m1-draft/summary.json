@@ -1,0 +1,203 @@
+{
+  "status": "incomplete",
+  "runDir": "eval-runs/m1-draft",
+  "rows": 40,
+  "completeRows": 0,
+  "validationIssues": [],
+  "incompleteRows": [
+    "RB-01-O",
+    "RB-01-S",
+    "RB-02-O",
+    "RB-02-S",
+    "RB-03-O",
+    "RB-03-S",
+    "RB-04-O",
+    "RB-04-S",
+    "RB-05-O",
+    "RB-05-S",
+    "RB-06-O",
+    "RB-06-S",
+    "RB-07-O",
+    "RB-07-S",
+    "RB-08-O",
+    "RB-08-S",
+    "RB-09-O",
+    "RB-09-S",
+    "RB-10-O",
+    "RB-10-S",
+    "MR-01-O",
+    "MR-01-S",
+    "MR-02-O",
+    "MR-02-S",
+    "MR-03-O",
+    "MR-03-S",
+    "MR-04-O",
+    "MR-04-S",
+    "MR-05-O",
+    "MR-05-S",
+    "MR-06-O",
+    "MR-06-S",
+    "MR-07-O",
+    "MR-07-S",
+    "MR-08-O",
+    "MR-08-S",
+    "MR-09-O",
+    "MR-09-S",
+    "MR-10-O",
+    "MR-10-S"
+  ],
+  "ordinary": {
+    "count": 20,
+    "scoredRows": 0,
+    "successAverage": null,
+    "qualityAverage": null,
+    "skippedStepRate": null,
+    "prematureFutureWorkRate": null,
+    "userCorrectionAverage": null,
+    "tokenAverage": null,
+    "timeAverage": null
+  },
+  "ssp": {
+    "count": 20,
+    "scoredRows": 0,
+    "successAverage": null,
+    "qualityAverage": null,
+    "skippedStepRate": null,
+    "prematureFutureWorkRate": null,
+    "userCorrectionAverage": null,
+    "tokenAverage": null,
+    "timeAverage": null
+  },
+  "chainCompletionRate": null,
+  "pairwise": [
+    {
+      "taskId": "MR-01",
+      "result": "missing"
+    },
+    {
+      "taskId": "MR-02",
+      "result": "missing"
+    },
+    {
+      "taskId": "MR-03",
+      "result": "missing"
+    },
+    {
+      "taskId": "MR-04",
+      "result": "missing"
+    },
+    {
+      "taskId": "MR-05",
+      "result": "missing"
+    },
+    {
+      "taskId": "MR-06",
+      "result": "missing"
+    },
+    {
+      "taskId": "MR-07",
+      "result": "missing"
+    },
+    {
+      "taskId": "MR-08",
+      "result": "missing"
+    },
+    {
+      "taskId": "MR-09",
+      "result": "missing"
+    },
+    {
+      "taskId": "MR-10",
+      "result": "missing"
+    },
+    {
+      "taskId": "RB-01",
+      "result": "missing"
+    },
+    {
+      "taskId": "RB-02",
+      "result": "missing"
+    },
+    {
+      "taskId": "RB-03",
+      "result": "missing"
+    },
+    {
+      "taskId": "RB-04",
+      "result": "missing"
+    },
+    {
+      "taskId": "RB-05",
+      "result": "missing"
+    },
+    {
+      "taskId": "RB-06",
+      "result": "missing"
+    },
+    {
+      "taskId": "RB-07",
+      "result": "missing"
+    },
+    {
+      "taskId": "RB-08",
+      "result": "missing"
+    },
+    {
+      "taskId": "RB-09",
+      "result": "missing"
+    },
+    {
+      "taskId": "RB-10",
+      "result": "missing"
+    }
+  ],
+  "winTieRate": null,
+  "correctionDrop": null,
+  "qualityDelta": null,
+  "tokenRatio": null,
+  "timeRatio": null,
+  "gates": [
+    {
+      "name": "L1 chain completion rate >= 90%",
+      "passed": false,
+      "value": "n/a",
+      "threshold": ">= 90%",
+      "note": ""
+    },
+    {
+      "name": "SSP skipped-step rate <= 10%",
+      "passed": false,
+      "value": "n/a",
+      "threshold": "<= 10%",
+      "note": ""
+    },
+    {
+      "name": "SSP premature future work rate <= 10%",
+      "passed": false,
+      "value": "n/a",
+      "threshold": "<= 10%",
+      "note": ""
+    },
+    {
+      "name": "SSP wins or ties ordinary Skill on >= 70% of tasks",
+      "passed": false,
+      "value": "n/a",
+      "threshold": ">= 70%",
+      "note": ""
+    },
+    {
+      "name": "User correction drops >= 20% or quality improves clearly without correction regression",
+      "passed": false,
+      "value": "correction drop=n/a, quality delta=n/a",
+      "threshold": "drop >= 20% or quality delta >= 0.30",
+      "note": ""
+    },
+    {
+      "name": "Token and time ratios stay within 1.5x when available",
+      "passed": true,
+      "value": "tokens=n/a, time=n/a",
+      "threshold": "<= 1.5x",
+      "note": ""
+    }
+  ]
+}
