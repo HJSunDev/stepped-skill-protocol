@@ -1,0 +1,367 @@
+#!/usr/bin/env node
+
+import fs from "node:fs";
+import path from "node:path";
+
+const REQUIRED_STEP_SECTIONS = [
+  "Objective",
+  "Resources",
+  "Instructions",
+  "Output",
+  "Completion Criteria",
+  "Handoff",
+  "Next",
+];
+
+const SUPPORTED_REQUIRED_EXTENSIONS = new Set();
+const SUPPORTED_MAJOR_VERSION = "0";
+
+function issue(code, pathValue, section, expected, actual, message, hint) {
+  return {
+    code,
+    severity: "error",
+    path: pathValue,
+    section,
+    expected,
+    actual,
+    message,
+    hint,
+  };
+}
+
+function readText(filePath) {
+  return fs.readFileSync(filePath, "utf8");
+}
+
+function exists(filePath) {
+  return fs.existsSync(filePath);
+}
+
+function toPosix(value) {
+  return value.replaceAll(path.sep, "/");
+}
+
+function packagePath(root, relativePath) {
+  return path.join(root, ...relativePath.split("/"));
+}
+
+function isSafeProtocolPath(value) {
+  return (
+    typeof value === "string" &&
+    value.length > 0 &&
+    !value.startsWith("/") &&
+    !/^[a-zA-Z]:/.test(value) &&
+    !value.includes("..") &&
+    !value.includes("?") &&
+    !value.includes("#") &&
+    !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value)
+  );
+}
+
+function parseFrontmatter(text) {
+  if (!text.startsWith("---\n")) return { fields: {}, metadata: {}, body: text };
+  const end = text.indexOf("\n---", 4);
+  if (end === -1) return { fields: {}, metadata: {}, body: text };
+  const yaml = text.slice(4, end).split(/\r?\n/);
+  const fields = {};
+  const metadata = {};
+  let inMetadata = false;
+
+  for (const line of yaml) {
+    if (/^\s*$/.test(line)) continue;
+    const top = /^([A-Za-z0-9_.-]+):\s*(.*)$/.exec(line);
+    if (top && !line.startsWith(" ")) {
+      inMetadata = top[1] === "metadata";
+      if (!inMetadata) fields[top[1]] = stripQuotes(top[2]);
+      continue;
+    }
+    const nested = /^\s+([A-Za-z0-9_.-]+):\s*(.*)$/.exec(line);
+    if (inMetadata && nested) metadata[nested[1]] = stripQuotes(nested[2]);
+  }
+
+  return { fields, metadata, body: text.slice(end + 5) };
+}
+
+function stripQuotes(value) {
+  return value.replace(/^["']|["']$/g, "");
+}
+
+function parseRequiredExtensionMetadata(value) {
+  if (!value) return [];
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function majorVersion(value) {
+  if (!value) return null;
+  return String(value).split(".")[0] || null;
+}
+
+function isSupportedVersion(value) {
+  return majorVersion(value) === SUPPORTED_MAJOR_VERSION;
+}
+
+function sectionBody(markdown, sectionName) {
+  const lines = markdown.split(/\r?\n/);
+  const heading = `## ${sectionName}`;
+  const start = lines.findIndex((line) => line.trim() === heading);
+  if (start === -1) return null;
+  let end = lines.length;
+  for (let index = start + 1; index < lines.length; index += 1) {
+    if (/^##\s+/.test(lines[index])) {
+      end = index;
+      break;
+    }
+  }
+  return lines.slice(start + 1, end).join("\n").trim();
+}
+
+function parseNext(markdown) {
+  const body = sectionBody(markdown, "Next");
+  if (!body) return null;
+  const code = /`([^`]+)`/.exec(body);
+  return code ? code[1].trim() : body.split(/\r?\n/)[0].trim();
+}
+
+function parseResources(markdown) {
+  const body = sectionBody(markdown, "Resources");
+  if (!body) return null;
+  if (/^None\.?$/i.test(body.trim())) return [];
+  const resources = [];
+  for (const line of body.split(/\r?\n/)) {
+    const bullet = /^\s*-\s+`?([^`]+?)`?\s*$/.exec(line);
+    if (bullet) resources.push(bullet[1].trim());
+  }
+  return resources;
+}
+
+function generatedStepId(stepPath) {
+  return stepPath.replace(/^steps\//, "").replace(/\.md$/, "").replaceAll("/", ".");
+}
+
+function listStepFiles(root) {
+  const stepsRoot = packagePath(root, "steps");
+  if (!exists(stepsRoot)) return [];
+  const out = [];
+  const visit = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const absolute = path.join(dir, entry.name);
+      if (entry.isDirectory()) visit(absolute);
+      if (entry.isFile() && entry.name.endsWith(".md")) {
+        out.push(toPosix(path.relative(root, absolute)));
+      }
+    }
+  };
+  visit(stepsRoot);
+  return out.sort();
+}
+
+function validatePackage(rootInput) {
+  const root = path.resolve(rootInput);
+  const issues = [];
+  const skillPath = path.join(root, "SKILL.md");
+
+  if (!exists(skillPath)) {
+    issues.push(issue("SSP_PACKAGE_INVALID", "SKILL.md", "file", "present", "missing", "SKILL.md is missing.", "Add SKILL.md."));
+    return { root, ok: false, issues };
+  }
+
+  const skill = parseFrontmatter(readText(skillPath));
+  if (!skill.fields.name) {
+    issues.push(issue("SSP_PACKAGE_INVALID", "SKILL.md", "name", "present", "missing", "Skill name is missing.", "Add name frontmatter."));
+  }
+  if (!skill.fields.description) {
+    issues.push(issue("SSP_PACKAGE_INVALID", "SKILL.md", "description", "present", "missing", "Skill description is missing.", "Add description frontmatter."));
+  }
+  const skillVersion = skill.metadata["stepped-skill.version"];
+  if (!skillVersion) {
+    issues.push(issue("SSP_ENTRY_MISSING", "SKILL.md", "metadata.stepped-skill.version", "present", "missing", "SSP version metadata is missing.", "Add stepped-skill.version."));
+  } else if (!isSupportedVersion(skillVersion)) {
+    issues.push(issue("SSP_VERSION_UNSUPPORTED", "SKILL.md", "metadata.stepped-skill.version", `${SUPPORTED_MAJOR_VERSION}.x`, skillVersion, "SSP major version is unsupported.", "Use a supported SSP version or upgrade the validator/runtime."));
+  }
+  const entry = skill.metadata["stepped-skill.entry"];
+  if (!entry) {
+    issues.push(issue("SSP_ENTRY_MISSING", "SKILL.md", "metadata.stepped-skill.entry", "present", "missing", "SSP entry metadata is missing.", "Add stepped-skill.entry."));
+  }
+  if (!/## Fallback Workflow/.test(skill.body)) {
+    issues.push(issue("SSP_PACKAGE_INVALID", "SKILL.md", "Fallback Workflow", "present", "missing", "Fallback workflow is missing.", "Add an ordinary Skill fallback."));
+  }
+
+  const metadataRequiredExtensions = parseRequiredExtensionMetadata(skill.metadata["stepped-skill.required-extensions"]);
+  let manifest = null;
+  const manifestPath = packagePath(root, ".ssp/manifest.json");
+  if (exists(manifestPath)) {
+    try {
+      manifest = JSON.parse(readText(manifestPath));
+    } catch (error) {
+      issues.push(issue("SSP_PACKAGE_INVALID", ".ssp/manifest.json", "json", "valid JSON", error.message, "Manifest is not valid JSON.", "Regenerate the manifest."));
+    }
+  } else {
+    issues.push(issue("SSP_PACKAGE_INVALID", ".ssp/manifest.json", "file", "present", "missing", "Manifest is missing for publication validation.", "Generate .ssp/manifest.json."));
+  }
+
+  const manifestRequiredExtensions = Array.isArray(manifest?.requiredExtensions) ? manifest.requiredExtensions : [];
+  const requiredExtensions = [...new Set([...metadataRequiredExtensions, ...manifestRequiredExtensions])];
+  for (const extension of requiredExtensions) {
+    if (!SUPPORTED_REQUIRED_EXTENSIONS.has(extension)) {
+      issues.push(issue("SSP_EXTENSION_UNSUPPORTED", ".ssp/manifest.json", "requiredExtensions", "known supported extension", extension, "Required extension is unknown.", "Remove the required extension or use a validator/runtime that supports it."));
+    }
+  }
+  if (manifest && JSON.stringify(metadataRequiredExtensions) !== JSON.stringify(manifestRequiredExtensions)) {
+    issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", "requiredExtensions", JSON.stringify(metadataRequiredExtensions), JSON.stringify(manifestRequiredExtensions), "Manifest requiredExtensions do not match SKILL.md metadata.", "Regenerate manifest."));
+  }
+  if (manifest) {
+    if (!manifest.version) {
+      issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", "version", skillVersion ?? "supported version", "missing", "Manifest version is missing.", "Regenerate manifest."));
+    } else if (!isSupportedVersion(manifest.version)) {
+      issues.push(issue("SSP_VERSION_UNSUPPORTED", ".ssp/manifest.json", "version", `${SUPPORTED_MAJOR_VERSION}.x`, manifest.version, "Manifest SSP major version is unsupported.", "Use a supported SSP version or upgrade the validator/runtime."));
+    } else if (skillVersion && manifest.version !== skillVersion) {
+      issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", "version", skillVersion, manifest.version, "Manifest version does not match SKILL.md metadata.", "Regenerate manifest."));
+    }
+  }
+
+  if (!entry) return { root, ok: issues.length === 0, issues };
+  if (!isSafeProtocolPath(entry) || !entry.startsWith("steps/") || !entry.endsWith(".md")) {
+    issues.push(issue("SSP_ENTRY_MISSING", "SKILL.md", "metadata.stepped-skill.entry", "steps/*.md", entry, "Entry path is invalid.", "Use a safe steps/*.md path."));
+    return { root, ok: false, issues };
+  }
+
+  const projected = [];
+  const seen = new Set();
+  let current = entry;
+  let chainBroken = false;
+
+  while (current !== "END") {
+    if (seen.has(current)) {
+      issues.push(issue("SSP_CHAIN_CYCLE", current, "Next", "acyclic chain", current, "Step chain contains a cycle.", "Break the cycle."));
+      break;
+    }
+    seen.add(current);
+
+    const currentPath = packagePath(root, current);
+    if (!exists(currentPath)) {
+      issues.push(issue("SSP_STEP_UNREADABLE", current, "file", "present", "missing", "Step file cannot be read.", "Create the step file or fix Next."));
+      break;
+    }
+
+    const body = readText(currentPath);
+    for (const section of REQUIRED_STEP_SECTIONS) {
+      if (sectionBody(body, section) === null) {
+        issues.push(issue("SSP_STEP_MISSING_SECTION", current, section, "present", "missing", `Step is missing ${section}.`, `Add ## ${section}.`));
+      }
+    }
+
+    const resources = parseResources(body) ?? [];
+    for (const resource of resources) {
+      const validResource = isSafeProtocolPath(resource) && !resource.startsWith(".ssp/");
+      if (!validResource || !exists(packagePath(root, resource)) || fs.statSync(packagePath(root, resource)).isDirectory()) {
+        issues.push(issue("SSP_RESOURCE_UNREADABLE", current, "Resources", "existing file path", resource, "Resource path is invalid or unreadable.", "Use an existing skill-root relative file path."));
+      }
+    }
+
+    const next = parseNext(body);
+    const manifestStep = manifest?.steps?.find((step) => step.path === current);
+    const expectedNext = manifestStep?.next;
+    let invalidNext = false;
+    if (!next) {
+      issues.push(issue("SSP_NEXT_INVALID", current, "Next", "step path or END", "missing", "Next is missing.", "Add ## Next."));
+      chainBroken = true;
+      break;
+    }
+    if (expectedNext && next !== expectedNext) {
+      issues.push(issue("SSP_NEXT_INVALID", current, "Next", expectedNext, next, "Body Next does not match manifest next.", "Update body Next or regenerate manifest from source."));
+      invalidNext = true;
+    }
+    if (next !== "END") {
+      const validNext = isSafeProtocolPath(next) && next.startsWith("steps/") && next.endsWith(".md");
+      if (!invalidNext && (!validNext || !exists(packagePath(root, next)))) {
+        issues.push(issue("SSP_NEXT_INVALID", current, "Next", expectedNext ?? "existing steps/*.md or END", next, "Next target is invalid or missing.", "Use an existing steps/*.md path or END."));
+        invalidNext = true;
+      }
+      if (invalidNext) {
+        projected.push({
+          id: generatedStepId(current),
+          path: current,
+          next,
+          resources,
+        });
+        chainBroken = true;
+        break;
+      }
+    }
+
+    if (next !== "END") {
+      const handoff = sectionBody(body, "Handoff");
+      if (!handoff || /^None\.?$/i.test(handoff.trim())) {
+        issues.push(issue("SSP_HANDOFF_MISSING", current, "Handoff", "carry-forward state", handoff ?? "missing", "Non-terminal step lacks handoff.", "Define carry-forward state."));
+      }
+    }
+
+    projected.push({
+      id: generatedStepId(current),
+      path: current,
+      next,
+      resources,
+    });
+    current = next;
+  }
+
+  if (manifest && !chainBroken) {
+    if (manifest.protocol !== "stepped-skill") {
+      issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", "protocol", "stepped-skill", manifest.protocol, "Manifest protocol is invalid.", "Set protocol to stepped-skill."));
+    }
+    if (manifest.entry !== entry) {
+      issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", "entry", entry, manifest.entry, "Manifest entry does not match SKILL.md.", "Regenerate manifest."));
+    }
+    const actualManifestSteps = manifest.steps ?? [];
+    const expectedPaths = projected.map((step) => step.path);
+    const actualPaths = actualManifestSteps.map((step) => step.path);
+    if (JSON.stringify(expectedPaths) !== JSON.stringify(actualPaths)) {
+      issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", "steps", expectedPaths.join(" -> "), actualPaths.join(" -> "), "Manifest step order does not match projected chain.", "Regenerate manifest."));
+    }
+    for (const step of projected) {
+      const actual = actualManifestSteps.find((item) => item.path === step.path);
+      if (!actual) continue;
+      if (actual.next !== step.next) {
+        issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", `${step.path}.next`, step.next, actual.next, "Manifest next does not match source.", "Regenerate manifest."));
+      }
+      if (JSON.stringify(actual.resources ?? []) !== JSON.stringify(step.resources)) {
+        issues.push(issue("SSP_MANIFEST_MISMATCH", ".ssp/manifest.json", `${step.path}.resources`, JSON.stringify(step.resources), JSON.stringify(actual.resources ?? []), "Manifest resources do not match source.", "Regenerate manifest."));
+      }
+    }
+  }
+
+  if (!chainBroken) {
+    const reachable = new Set(projected.map((step) => step.path));
+    for (const stepFile of listStepFiles(root)) {
+      if (!reachable.has(stepFile)) {
+        issues.push(issue("SSP_CHAIN_UNREACHABLE_STEP", stepFile, "chain", "reachable", "unreachable", "Published package contains an unreachable step file.", "Remove the step or link it into the chain."));
+      }
+    }
+  }
+
+  return { root, ok: issues.length === 0, projected, issues };
+}
+
+const args = process.argv.slice(2);
+if (args.length === 0) {
+  console.error("Usage: node validate-ssp.mjs <skill-package> [<skill-package> ...]");
+  process.exit(2);
+}
+
+let failed = false;
+for (const arg of args) {
+  const result = validatePackage(arg);
+  const label = path.relative(process.cwd(), result.root) || result.root;
+  if (result.ok) {
+    console.log(`PASS ${label}`);
+  } else {
+    failed = true;
+    console.log(`FAIL ${label}`);
+    console.log(JSON.stringify(result.issues, null, 2));
+  }
+}
+
+process.exit(failed ? 1 : 0);
