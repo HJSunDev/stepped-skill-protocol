@@ -38,7 +38,7 @@ my-stepped-skill/
     manifest.json
 ```
 
-The package directory name must match the `name` field in `SKILL.md`.
+The package directory name must match the `name` field in `SKILL.md`. `name` should be short, stable, easy to invoke, and intent-revealing; prefer 1-3 lowercase hyphenated English words and avoid sentence-like directory names or object-only/domain-only names.
 
 ## 3. `SKILL.md` Requirements
 
@@ -46,7 +46,7 @@ The package directory name must match the `name` field in `SKILL.md`.
 
 - Use YAML frontmatter.
 - Include `name` and `description`.
-- Keep the `name` lowercase, hyphenated, and equal to the folder name.
+- Keep the `name` lowercase, hyphenated, and equal to the folder name; prefer a short name, but the name alone should tell a user what they are asking the agent to do. Do not pack the full task description into `name`.
 - Describe the user problem in `description`; do not spend the primary trigger text on protocol mechanics.
 - Preserve ordinary optional Agent Skills fields such as `license`, `compatibility`, `metadata`, and `allowed-tools` when needed.
 
@@ -63,7 +63,9 @@ metadata:
 - a useful ordinary fallback workflow;
 - a short SSP protocol capsule;
 - the entry step path;
-- no full copy of all high-fidelity step instructions.
+- only the entry step path, not the inline entry step body or any other step body;
+- no high-fidelity step instructions copied into `SKILL.md`.
+- no exact future-step document lists, resource path lists, or detailed checklists; those belong in the relevant step.
 
 The fallback is not decorative. If an agent only sees `SKILL.md`, it should still be able to complete a lower-fidelity version of the job.
 
@@ -93,6 +95,7 @@ Section rules:
 
 - `Objective` states the current phase only.
 - `Resources` is exactly `None` or a bullet list of local skill-root relative paths.
+- `Resources` lists only bundled Skill-package support files; user workspace files, project repository files, task input files, or review target files belong in `Instructions`, not in `Resources`.
 - `Instructions` gives enough detail to complete the current phase without reading future steps.
 - `Output` names the concrete deliverable for the step.
 - `Completion Criteria` makes it clear when the step is done.
@@ -120,6 +123,7 @@ Before considering a package ready:
 - There are no unreachable steps.
 - Resource paths are local, relative, and inside the package.
 - Step resources are exact paths, not directories, URLs, absolute paths, or traversal paths.
+- User workspace / project repository target files are not incorrectly listed as `Resources`.
 - Handoff expectations are explicit.
 - The package does not claim L0/L1 hard isolation.
 - The manifest, if present, matches the source files.
@@ -129,7 +133,12 @@ Before considering a package ready:
 Avoid these:
 
 - Empty-shell `SKILL.md` that only points to steps.
+- Sentence-like `name` values that turn the full task title into the directory name.
+- Object-only or domain-only `name` values that do not express the task intent, such as naming project onboarding `project-core`.
 - Arbitrary splits that make one reasoning task harder.
+- Full step-chain previews, future-phase exact resource lists, or high-fidelity step details in the `SKILL.md` fallback.
+- Inline entry step body or any other step body in `SKILL.md`.
+- User project files, repository files, or task target files listed as `Resources`.
 - Large future-step previews in the current step.
 - Rule-heavy capsules that rely on prohibitions instead of good structure.
 - Hidden security claims such as "the model cannot see future steps" at L0/L1.

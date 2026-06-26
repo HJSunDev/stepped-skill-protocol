@@ -79,7 +79,7 @@ Do not make authors hand-maintain control-plane files.
 
 `SKILL.md` is the only public entry point. It must work for both ordinary agents and SSP-aware agents.
 
-The `name` field must follow Agent Skills naming rules and match the package directory. The `description` should describe what the Skill does and when to use it; do not spend the primary description budget on SSP mechanics.
+The `name` field must follow Agent Skills naming rules and match the package directory. It should also be short, stable, easy to invoke, and intent-revealing; prefer 1-3 lowercase hyphenated English words. The name alone should roughly tell a user what they are asking the agent to do. Avoid object-only or domain-only names such as `project-core` when the user intent is project onboarding. Put full trigger semantics in `description`, not in `name`. The `description` should describe what the Skill does and when to use it; do not spend the primary description budget on SSP mechanics.
 
 Optional Agent Skills fields such as `license`, `compatibility`, `metadata`, and `allowed-tools` remain ordinary Agent Skills fields. SSP adds namespaced `stepped-skill.*` keys inside `metadata`; it does not replace or reinterpret the base Skill format.
 
@@ -124,8 +124,10 @@ Rules:
 
 - The `description` should describe the user problem, not the protocol mechanics.
 - The fallback must be complete enough to run.
+- The fallback must stay lower fidelity: do not preview the full step chain, exact future-step document/resource lists, or detailed checklists.
 - The protocol capsule should stay short.
 - Do not put all high-fidelity step instructions in `SKILL.md`; that defeats distributed reading.
+- `SKILL.md` must name only the entry step path, not include the entry step content or any other step body.
 
 ## 5. Choose Step Boundaries
 
@@ -242,6 +244,8 @@ Bad:
 
 Resources are local supporting files, not a dumping ground.
 
+Resources are files bundled inside the Skill package. They are not a general list of workspace files, repository files, user-provided files, or task targets. If a step needs the agent to inspect files in the user's project, put those paths in `Instructions` as task inputs, not in `Resources`, unless the files are packaged under the Skill root.
+
 Use resources for:
 
 - rubrics;
@@ -256,6 +260,7 @@ Do not use resources for:
 - secret answers;
 - large unrelated background packs;
 - dynamic state that belongs in handoff.
+- user workspace or repository files that are merely targets of the task.
 
 Each step should list only the resources it needs.
 
@@ -357,7 +362,8 @@ Empty shell:
 Future preview:
 
 - `SKILL.md` summarizes every step in detail.
-- Fix: keep only a short fallback and entry pointer.
+- `SKILL.md` lists exact future-step document paths, resource paths, or detailed checklists.
+- Fix: keep only a short lower-fidelity fallback and entry pointer; put exact future-step materials in the relevant step.
 
 Artificial split:
 

@@ -167,6 +167,7 @@ Fields:
 - Fallback MUST be non-empty.
 - Fallback MUST be complete enough to produce a lower-fidelity result without reading step files.
 - Fallback MUST NOT be empty protocol boilerplate.
+- Fallback MUST NOT duplicate high-fidelity future-step instructions, exact future-step document lists, resource path lists, or detailed checklists.
 
 ### 4.4 Step Sections
 
@@ -188,6 +189,7 @@ Terminal steps MAY define `Handoff` as `None`.
 
 - `Resources` MUST be exact skill-root relative file paths or `None`.
 - `Resources` MUST be written as exactly `None` or as a Markdown bullet list of exact file paths.
+- `Resources` describe bundled Skill-package support files, not arbitrary workspace, repository, or user task files.
 - Resource paths MUST NOT point to directories.
 - Resource paths MUST NOT escape the skill root.
 - Resource paths MUST use `/` separators and MUST NOT contain backslashes, query fragments, hash fragments, absolute paths, drive letters, or URLs.

@@ -25,7 +25,7 @@ package-name/
     manifest.json
 ```
 
-包目录名必须与 `SKILL.md` frontmatter 中的 `name` 一致。
+包目录名必须与 `SKILL.md` frontmatter 中的 `name` 一致。`name` 同时是用户和 agent 可能直接触发的标识，应该短、稳定、好记，并能表达任务意图；优先 1-3 个英文小写连字符词。单看 `name` 应能大致知道用户想让 agent 做什么。不要只写对象名、项目名或领域名（例如 `xxx-core`），也不要把完整任务描述、所有阶段或项目路径塞进 `name`，这些信息应放在 `description`、fallback 或 step 文件中。
 
 ## `SKILL.md` Source 契约
 
@@ -45,13 +45,15 @@ metadata:
 
 规则：
 
-- `name` 使用小写字母、数字和单个连字符。
+- `name` 使用小写字母、数字和单个连字符；优先短名，但必须表达任务意图，避免长句式目录名和纯对象名。
 - `description` 描述用户问题，不描述协议机制。
 - v0 包的 `metadata.stepped-skill.version` 是 `"0.1"`。
 - `metadata.stepped-skill.entry` 是安全的本地 `steps/*.md` 路径。
 - 可选 `metadata.stepped-skill.required-extensions` 是逗号分隔字符串。
 - 正文必须包含完整的 `Fallback Workflow`。
-- 正文应该包含简短的 `Stepped Skill Protocol` 胶囊，说明 entry step 和执行循环。
+- 正文必须包含简短的 `Stepped Skill Protocol` 胶囊，说明 entry step 和执行循环。
+- `Fallback Workflow` 必须是低保真普通路径，不得完整复制 step 链、未来 step 的精确资源清单、文档路径列表或详细检查表。高保真阶段说明必须留在对应 step 文件。
+- `SKILL.md` 只能声明 entry step 路径，不得内联 entry step 或任何其他 step 正文。
 
 ## Step Source 契约
 
@@ -70,6 +72,7 @@ metadata:
 规则：
 
 - `Resources` 必须是精确的 `None`，或 Markdown bullet list，列表项是 skill-root 相对文件路径。
+- `Resources` 只表示打包在 Skill 目录内的支持文件。用户工作区、项目仓库、任务输入文件或被审查目标文件不属于 SSP `Resources`；如果 step 需要读取这些文件，把路径写在 `Instructions` 中作为任务输入。
 - `Next` 只能有一个裸 target，或一个 code span target。
 - `Next` 要么是 `END`，要么是安全的本地 `steps/*.md` 路径。
 - 非终止 step 必须包含有用 handoff state。

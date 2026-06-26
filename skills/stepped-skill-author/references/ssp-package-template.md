@@ -36,9 +36,11 @@ Use this skill to [plain-language job].
 
 If step files are unavailable, complete the work linearly:
 
-1. [First fallback action.]
-2. [Second fallback action.]
-3. [Final fallback action.]
+1. [Lower-fidelity action that can run without step files.]
+2. [Lower-fidelity action that describes the capability, not the full future step details.]
+3. [Final lower-fidelity action and stopping condition.]
+
+This fallback is complete but lower fidelity. Use the step files when available because exact future-stage resources and high-fidelity instructions live there.
 
 ## Stepped Skill Protocol
 
@@ -54,7 +56,7 @@ Loop:
 4. Stop when `Next` is `END`.
 ```
 
-说明：为了兼容更广的 Agent Skills 生态，`name` 建议保持英文小写连字符；`description` 可按目标用户语言编写。
+说明：为了兼容更广的 Agent Skills 生态，`name` 建议保持英文小写连字符，并且要短、稳定、方便触发、表达任务意图；优先 1-3 个词。不要只写对象名或领域名；例如“让 agent 熟悉项目”应命名为类似 `project-onboarding` / `repo-orientation`，而不是 `project-core`。`description` 可按目标用户语言编写，完整触发语义放在这里，不要塞进 `name`。`Fallback Workflow` 只写低保真普通路径，不要复制完整 step 链、未来 step 的精确资源清单或详细检查表。`SKILL.md` 只声明 entry step 路径，不内联任何 step 正文。
 
 ## 非终止 Step
 
@@ -68,6 +70,8 @@ Loop:
 ## Resources
 
 - `references/example.md`
+
+说明：`Resources` 只列 skill 包内支持文件。用户工作区、项目仓库、任务输入文件或被审查目标文件应写在 `Instructions` 中，不写进 `Resources`。
 
 ## Instructions
 

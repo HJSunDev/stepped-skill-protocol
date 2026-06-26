@@ -36,9 +36,11 @@ Use this skill to [plain-language job].
 
 If step files are unavailable, complete the work linearly:
 
-1. [First fallback action.]
-2. [Second fallback action.]
-3. [Final fallback action.]
+1. [Lower-fidelity action that can run without step files.]
+2. [Lower-fidelity action that describes the capability, not the full future step details.]
+3. [Final lower-fidelity action and stopping condition.]
+
+This fallback is complete but lower fidelity. Use the step files when available because exact future-stage resources and high-fidelity instructions live there.
 
 ## Stepped Skill Protocol
 
@@ -54,6 +56,8 @@ Loop:
 4. Stop when `Next` is `END`.
 ```
 
+Note: To stay compatible with the broader Agent Skills ecosystem, keep `name` in lowercase English hyphen form, short, stable, easy to invoke, and intent-revealing; prefer 1-3 words. Do not use only an object or domain name; for example, name “help the agent get familiar with a project” something like `project-onboarding` or `repo-orientation`, not `project-core`. `description` may be written in the target user language. Put full trigger semantics there, not in `name`. `Fallback Workflow` should be a lower-fidelity ordinary path and must not copy the full step chain, exact future-step resource lists, or detailed checklists. `SKILL.md` should name only the entry step path, not inline any step body.
+
 ## Non-Terminal Step
 
 ```markdown
@@ -66,6 +70,8 @@ Loop:
 ## Resources
 
 - `references/example.md`
+
+Note: `Resources` lists only support files bundled inside the Skill package. User workspace files, project repository files, task input files, or review target files belong in `Instructions`, not in `Resources`.
 
 ## Instructions
 

@@ -19,16 +19,20 @@ Recommend an ordinary Skill instead when the task is short, tightly coupled, arb
 
 1. Decide whether SSP fits the task.
 2. Define the Skill's user-facing job, trigger conditions, inputs, and final output.
-3. Design a finite linear step chain with natural phase boundaries.
-4. Write `SKILL.md` as a complete ordinary Skill fallback, then add the short SSP protocol capsule and `metadata.stepped-skill.*` fields.
-5. Write step files under `steps/`, making each step sufficient for its own phase.
-6. For publication packages, create or check `.ssp/manifest.json` from the source files using the portable projection rules.
-7. Use any available local validator as optional confirmation, then manually check the package against the bundled checklist.
-8. Fix structural failures before polishing prose.
+3. Choose a short, easy-to-invoke, intent-revealing `name` first: prefer 1-3 lowercase hyphenated English words, and the name alone should roughly tell a user what they are asking the agent to do. Do not use only an object, project, or domain name such as `xxx-core`, and do not pack the full task description into the name; the directory name must equal `name`, and detailed trigger semantics belong in `description`.
+4. Design a finite linear step chain with natural phase boundaries.
+5. Write `SKILL.md` as a complete but lower-fidelity ordinary Skill fallback, then add the short SSP protocol capsule and `metadata.stepped-skill.*` fields. `SKILL.md` must name only the entry step path; do not inline any step body, future-step high-fidelity instructions, exact document lists, or resource paths.
+6. Write step files under `steps/`, making each step sufficient for its own phase.
+7. For publication packages, create or check `.ssp/manifest.json` from the source files using the portable projection rules.
+8. Use any available local validator as optional confirmation, then manually check the package against the bundled checklist.
+9. Fix structural failures before polishing prose.
 
 ## Quality Bar
 
 - The package is useful at L0 when only `SKILL.md` is available.
+- `name` is short, stable, easy for users to invoke, and intent-revealing; avoid sentence-like directory names and object-only/domain-only names.
+- `SKILL.md` does not contain any step body and does not expose the high-fidelity step chain; exact phase document lists, resource paths, and detailed checklists belong in the relevant step.
+- `Resources` list only bundled Skill-package support files; target files in the user's project, repository, or workspace belong in step `Instructions`, not in `Resources`.
 - Each step has one clear objective, one output contract, one handoff contract, and one `Next` target.
 - Focus comes from current-step sufficiency, not from telling the model not to inspect future files.
 - The protocol never claims L0/L1 hard isolation or security.

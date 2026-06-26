@@ -25,7 +25,7 @@ Optional files:
     manifest.json
 ```
 
-The package directory name must match `SKILL.md` frontmatter `name`.
+The package directory name must match `SKILL.md` frontmatter `name`. `name` is also an identifier users and agents may invoke directly, so it should be short, stable, memorable, and intent-revealing; prefer 1-3 lowercase hyphenated English words. The name alone should roughly tell a user what they are asking the agent to do. Do not use only an object, project, or domain name such as `xxx-core`, and do not pack the full task description, every phase, or project paths into `name`; put that detail in `description`, fallback, or step files.
 
 ## `SKILL.md` Source Contract
 
@@ -45,13 +45,15 @@ metadata:
 
 Rules:
 
-- `name` uses lowercase letters, digits, and single hyphens.
+- `name` uses lowercase letters, digits, and single hyphens; prefer a short name, but it must reveal the task intent; avoid sentence-like directory names and object-only names.
 - `description` describes the user problem, not the protocol mechanics.
 - `metadata.stepped-skill.version` is `"0.1"` for v0 packages.
 - `metadata.stepped-skill.entry` is a safe local `steps/*.md` path.
 - Optional `metadata.stepped-skill.required-extensions` is a comma-separated string.
 - The body must include a complete `Fallback Workflow`.
-- The body should include a short `Stepped Skill Protocol` capsule that names the entry step and loop.
+- The body must include a short `Stepped Skill Protocol` capsule that names the entry step and loop.
+- `Fallback Workflow` must be the lower-fidelity ordinary path; it must not copy the full step chain, exact future-step resource lists, document paths, or detailed checklists. High-fidelity phase instructions belong in the corresponding step files.
+- `SKILL.md` must name only the entry step path; it must not inline the entry step body or any other step body.
 
 ## Step Source Contract
 
@@ -70,6 +72,7 @@ Every step file should include exactly these operational sections:
 Rules:
 
 - `Resources` is exactly `None` or a Markdown bullet list of skill-root relative file paths.
+- `Resources` only describes support files bundled inside the Skill package. User workspace files, project repository files, task input files, or review target files are not SSP `Resources`; if a step needs them, put their paths in `Instructions` as task inputs.
 - `Next` is exactly one bare target or one code-spanned target.
 - `Next` is either `END` or a safe local `steps/*.md` path.
 - Non-terminal steps must include useful handoff state.

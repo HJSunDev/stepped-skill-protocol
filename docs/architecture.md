@@ -82,11 +82,12 @@ v0 不是：
 Stepped Skill 的目标体验：
 
 1. Skill 被触发。
-2. 模型读取 `SKILL.md` 中的能力说明、fallback、协议胶囊和 entry step。
-3. 当前 step 给出完成当前任务所需的一切。
-4. 模型完成当前 step 的交付物，并记录 handoff。
-5. 模型读取当前 step 的 `Next`。
-6. `Next` 是 step 文件时继续；`Next` 是 `END` 时结束。
+2. 模型读取 `SKILL.md` 中的能力说明、fallback、协议胶囊和 entry step **路径**。
+3. 模型读取 entry step 文件。
+4. 当前 step 给出完成当前任务所需的一切。
+5. 模型完成当前 step 的交付物，并记录 handoff。
+6. 模型读取当前 step 的 `Next`。
+7. `Next` 是 step 文件时继续；`Next` 是 `END` 时结束。
 
 适合 SSP 的任务不是“被硬拆开的耦合任务”，而是天然包含多个**相对解耦、顺序固定、边界清晰**的子任务。今天用户会手动分几次给 agent，SSP 要把这种人工链式交付产品化。
 
@@ -161,7 +162,7 @@ SSP 必须让使用者一眼知道自己支持到哪一层。
 体验：
 
 - agent 读取 `SKILL.md`。
-- 模型看到 Protocol Capsule 和 entry step。
+- 模型看到 Protocol Capsule 和 entry step 路径。
 - 模型按 `Next` 链路读取 step。
 - 每个 step 产出 Output 和 Handoff。
 
@@ -197,6 +198,7 @@ Resource access contract:
 - The entry path comes from `SKILL.md` metadata and Protocol Capsule.
 - Step resources come from the current step's `Resources`.
 - The next step path comes from the current step's `Next`.
+- This contract covers package files: step files and bundled resources under the Skill root. Workspace files, repository files, user-provided files, or task targets are not SSP `Resources` unless they are bundled inside the Skill package.
 - A resource read returns file content or a clear failure.
 - Directory reads are not required by SSP.
 - Network reads are not required by SSP.
@@ -216,7 +218,7 @@ SSP 有五个内容平面，职责不能混。
 
 | 平面 | 载体 | 模型是否默认读取 | 职责 |
 | --- | --- | --- | --- |
-| Skill plane | `SKILL.md` | 是 | 触发说明、能力承诺、L0 fallback、协议胶囊、entry |
+| Skill plane | `SKILL.md` | 是 | 触发说明、能力承诺、L0 fallback、协议胶囊、entry path |
 | Step plane | `steps/*.md` | 链式读取 | 高保真分步操作说明 |
 | Resource plane | `references/` / `scripts/` / `assets/` | 当前 step 按需读取 | 当前 step 所需资料、脚本、模板 |
 | Control plane | `.ssp/manifest.json` | 否 | validator / registry / runtime 的完整链路与校验信息 |
@@ -504,6 +506,7 @@ Fallback 的尺度规则：
 - **必须非空**：fallback MUST contain real ordinary Skill instructions, not only a heading.
 - **必须保持低保真**：fallback 只写阶段、成功标准、关键注意事项，不写每一步的详细操作细节。
 - **不得重复 steps**：高保真方法、复杂检查清单、长参考说明必须留在 step 中。
+- **不得预览未来 step 的精确材料**：未来阶段的精确文档清单、资源路径列表、长检查表和高保真执行细节必须留在对应 step。fallback 可以用概括性阶段说明保证 L0 可用。
 - **应控制长度**：fallback SHOULD 控制在 3-7 个动作或短段落内。
 - **应主动引导升级**：如果 agent 能读取 step 文件，应优先使用 step，因为 step 是权威高保真路径。
 
@@ -695,6 +698,8 @@ A published SSP step MUST include:
 ### 9.1 Resources
 
 Resources define what the current step needs.
+
+`Resources` are bundled Skill-package support files. They are not a general list of every workspace, repository, or user file the step may inspect. If a project-specific step instructs the agent to read repository files, those target paths belong in `Instructions` as task inputs, not in `Resources`, unless the files are actually bundled under the Skill root.
 
 Rules:
 
