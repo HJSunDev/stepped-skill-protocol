@@ -36,7 +36,7 @@ package-name/
 ```yaml
 ---
 name: package-name
-description: Use when the user needs a specific staged outcome.
+description: 当用户需要完成一个明确的分阶段结果时使用。
 metadata:
   stepped-skill.version: "0.1"
   stepped-skill.entry: "steps/01-first-step.md"

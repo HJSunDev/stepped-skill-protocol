@@ -22,38 +22,38 @@ package-name/
 ```markdown
 ---
 name: package-name
-description: Use when the user needs [specific staged outcome] for [specific situation].
+description: 当用户需要在[具体场景]中完成[具体分阶段结果]时使用。
 metadata:
   stepped-skill.version: "0.1"
   stepped-skill.entry: "steps/01-first-step.md"
 ---
 
-# Package Title
+# 包标题
 
-Use this skill to [plain-language job].
+使用本 Skill [用大白话说明它要帮助 agent 完成什么任务]。
 
 ## Fallback Workflow
 
-If step files are unavailable, complete the work linearly:
+如果 step 文件不可用，按以下低保真路径线性完成工作：
 
-1. [Lower-fidelity action that can run without step files.]
-2. [Lower-fidelity action that describes the capability, not the full future step details.]
-3. [Final lower-fidelity action and stopping condition.]
+1. [不依赖 step 文件也能执行的低保真动作。]
+2. [只描述能力轮廓、不暴露未来 step 细节的低保真动作。]
+3. [最终低保真动作和停止条件。]
 
-This fallback is complete but lower fidelity. Use the step files when available because exact future-stage resources and high-fidelity instructions live there.
+这个 fallback 是完整但低保真的路径。可读取 step 文件时，应使用 step 文件，因为精确的阶段资料和高保真说明位于对应 step 中。
 
 ## Stepped Skill Protocol
 
-This skill uses Stepped Skill Protocol v0.1.
+本 Skill 使用 Stepped Skill Protocol v0.1。
 
-Start with `steps/01-first-step.md`.
+从 `steps/01-first-step.md` 开始。
 
-Loop:
+循环：
 
-1. Complete the current step.
-2. Record the handoff requested by the step.
-3. Read the path named by `Next`.
-4. Stop when `Next` is `END`.
+1. 完成当前 step。
+2. 记录当前 step 要求的 handoff。
+3. 读取 `Next` 指向的路径。
+4. 当 `Next` 为 `END` 时停止。
 ```
 
 说明：为了兼容更广的 Agent Skills 生态，`name` 建议保持英文小写连字符，并且要短、稳定、方便触发、表达任务意图；优先 1-3 个词。不要只写对象名或领域名；例如“让 agent 熟悉项目”应命名为类似 `project-onboarding` / `repo-orientation`，而不是 `project-core`。`description` 可按目标用户语言编写，完整触发语义放在这里，不要塞进 `name`。`Fallback Workflow` 只写低保真普通路径，不要复制完整 step 链、未来 step 的精确资源清单或详细检查表。`SKILL.md` 只声明 entry step 路径，不内联任何 step 正文。
@@ -61,7 +61,7 @@ Loop:
 ## 非终止 Step
 
 ```markdown
-# [Step Title]
+# [当前阶段标题]
 
 ## Objective
 
@@ -90,7 +90,7 @@ Loop:
 
 ## Handoff
 
-Pass forward:
+向下一步传递：
 
 - [下一步需要的最小状态。]
 - [重要约束或未解决问题。]
@@ -103,7 +103,7 @@ Pass forward:
 ## 终止 Step
 
 ```markdown
-# [Final Step Title]
+# [最终阶段标题]
 
 ## Objective
 
@@ -130,7 +130,7 @@ None
 
 ## Handoff
 
-No downstream handoff. This is the terminal step.
+无需下游 handoff。这是终止 step。
 
 ## Next
 
